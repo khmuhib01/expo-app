@@ -1,15 +1,27 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {SafeAreaView, View, Text, TextInput, TouchableOpacity, StyleSheet, Alert} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {useDispatch} from 'react-redux';
 import {login} from './../../store/slice/auth/authSlice';
 import {postUserLogin} from './../../service/api';
+import {useRouter} from 'expo-router';
+import {useSelector} from 'react-redux';
 
 export default function Login() {
 	const [email, setEmail] = useState('khmuhib2013@gmail.com');
 	const [password, setPassword] = useState('password');
 	const navigation = useNavigation();
 	const dispatch = useDispatch();
+
+	const router = useRouter();
+	const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
+
+	useEffect(() => {
+		// If the user is already authenticated, redirect to the main app.
+		if (isAuthenticated) {
+			router.replace('/(tabs)');
+		}
+	}, [isAuthenticated, router]);
 
 	const handleLogin = async () => {
 		if (email && password) {

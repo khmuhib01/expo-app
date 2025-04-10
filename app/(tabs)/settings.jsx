@@ -1,6 +1,9 @@
 import React from 'react';
 import {View, Text, StyleSheet, TouchableOpacity, ScrollView} from 'react-native';
 import {Ionicons} from '@expo/vector-icons';
+import {useDispatch} from 'react-redux';
+import {useRouter} from 'expo-router';
+import {logout} from '../../store/slice/auth/authSlice';
 
 const MenuItem = ({icon, title, onPress, style}) => (
 	<TouchableOpacity onPress={onPress} style={[styles.menuItem, style]}>
@@ -10,14 +13,17 @@ const MenuItem = ({icon, title, onPress, style}) => (
 );
 
 export default function Settings() {
-	// Replace these handlers with your actual navigation or functionality logic.
+	const router = useRouter();
+	const dispatch = useDispatch();
+
 	const handlePress = (item) => {
 		console.log(item + ' pressed');
 	};
 
 	const handleLogout = () => {
 		console.log('Logout pressed');
-		// Add logout logic here (e.g. clearing auth tokens, navigating to login screen, etc.)
+		dispatch(logout());
+		router.replace('/auth/login'); // Redirect to login screen
 	};
 
 	return (

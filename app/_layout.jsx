@@ -7,12 +7,11 @@ import {ThemeContext} from '../context/ThemeContext';
 function MainLayoutInner() {
 	const {headerColor, headerTextColor, headerTextSize, headerButtonColor} = useContext(ThemeContext);
 	const router = useRouter();
-
-	// Assume your auth slice has an "isAuthenticated" property in the Redux store
+	// Assume your auth slice holds an "isAuthenticated" boolean flag in the Redux store.
 	const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
 
 	useEffect(() => {
-		// If not authenticated, redirect to the login screen
+		// If the user is not authenticated, push them to the login screen.
 		if (!isAuthenticated) {
 			router.push('/auth/login');
 		}
@@ -26,14 +25,13 @@ function MainLayoutInner() {
 
 	return (
 		<Stack screenOptions={screenOptions}>
-			{/* The (tabs) screen can be used for the main app once authenticated */}
 			<Stack.Screen name="(tabs)" options={{headerShown: false, title: 'Table Bookings'}} />
 			<Stack.Screen name="dashboard/todays-reservation" options={{headerShown: true, title: "Today's Reservations"}} />
 			<Stack.Screen
 				name="dashboard/upcoming-reservation"
 				options={{headerShown: true, title: 'Upcoming Reservations'}}
 			/>
-			<Stack.Screen name="auth/login" options={{headerShown: false, title: 'Login'}} />
+			<Stack.Screen name="auth/login" options={{headerShown: true, title: 'Login'}} />
 		</Stack>
 	);
 }

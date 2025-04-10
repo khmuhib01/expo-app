@@ -1,6 +1,8 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {View, Text, StyleSheet, FlatList, TouchableOpacity} from 'react-native';
 import {Ionicons} from '@expo/vector-icons';
+import {getGuestReservationInfo} from '../../service/api';
+import {useSelector} from 'react-redux';
 
 const reservationsData = [
 	{
@@ -49,13 +51,14 @@ const filterOptions = ['Today', 'Upcoming', 'Checked In', 'Check Out'];
 
 export default function Reservations() {
 	const [selectedFilter, setSelectedFilter] = useState('Today');
+	const [reservations, setReservations] = useState([]);
 
-	// Adjust the filtering logic according to your app's criteria.
-	// This demo assumes:
-	// - "Today": shows reservations with date "10/04/2025"
-	// - "Upcoming": shows reservations not matching that date
-	// - "Checked In": simulates that with status "Confirmed"
-	// - "Check Out": simulates that with status "Cancelled"
+	const restaurantId = useSelector((state) => state.auth.user.res_uuid);
+
+	console.log('res_uuid', JSON.stringify(restaurantId));
+
+	console.log('reservations', reservations.data);
+
 	const filteredData = reservationsData.filter((item) => {
 		if (selectedFilter === 'Today') {
 			return item.date === '10/04/2025';
@@ -72,9 +75,22 @@ export default function Reservations() {
 		return true;
 	});
 
+	// Fetch reservations on component mount
+	useEffect(() => {
+		fetchReservations();
+	}, []);
+
+	const fetchReservations = async () => {
+		try {
+			const data = await getGuestReservationInfo(restaurantId);
+			setReservations(data);
+		} catch (error) {
+			console.error('Error fetching reservations:', error);
+		}
+	};
+
 	const renderItem = ({item}) => (
 		<View style={styles.card}>
-			{/* Top Row: Table Badge + Reservation Info */}
 			<View style={styles.topRow}>
 				<View style={styles.tableBadge}>
 					<Text style={styles.badgeLabel}>TABLE</Text>
@@ -113,7 +129,6 @@ export default function Reservations() {
 				</View>
 			</View>
 
-			{/* Bottom Row: Action Buttons */}
 			<View style={styles.buttonRow}>
 				<TouchableOpacity style={[styles.button, styles.viewButton]}>
 					<Text style={[styles.buttonText, styles.viewButtonText]}>View</Text>
@@ -128,7 +143,6 @@ export default function Reservations() {
 		</View>
 	);
 
-	// FilterBar component renders the filter buttons at the top right.
 	const FilterBar = () => {
 		return (
 			<View style={styles.filterBar}>

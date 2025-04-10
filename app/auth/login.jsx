@@ -5,10 +5,13 @@ import {useDispatch, useSelector} from 'react-redux';
 import {login} from './../../store/slice/auth/authSlice';
 import {postUserLogin} from './../../service/api';
 import {useRouter} from 'expo-router';
+import ButtonComponent from '../../components/ui/ButtonComponent';
+import {isLoading} from 'expo-font';
 
 export default function Login() {
 	const [email, setEmail] = useState('khmuhib2013@gmail.com');
 	const [password, setPassword] = useState('password');
+	const [isLoading, setIsLoading] = useState(false);
 	const navigation = useNavigation();
 	const dispatch = useDispatch();
 	const router = useRouter();
@@ -23,6 +26,7 @@ export default function Login() {
 	const handleLogin = async () => {
 		if (email && password) {
 			try {
+				setIsLoading(true);
 				const response = await postUserLogin({email, password});
 				console.log('response', response);
 				dispatch(
@@ -31,7 +35,6 @@ export default function Login() {
 						user: response.data,
 					})
 				);
-
 				navigation.reset({
 					index: 0,
 					routes: [{name: '(tabs)'}],
@@ -39,48 +42,48 @@ export default function Login() {
 			} catch (error) {
 				console.error('Login failed:', error);
 				Alert.alert('Login Failed', 'Please check your credentials and try again.');
+			} finally {
+				setIsLoading(false);
 			}
 		} else {
 			Alert.alert('Validation Error', 'Please enter both email and password');
 		}
 	};
 
-	return (
-		<SafeAreaView style={styles.safeArea}>
-			<View style={styles.container}>
-				<Image source={require('./../../assets/images/react-logo.png')} style={styles.logo} resizeMode="contain" />
-				<Text style={styles.welcomeText}>Welcome Back!</Text>
-				<Text style={styles.header}>Login to your Account</Text>
-				<View style={styles.inputContainer}>
-					<TextInput
-						placeholder="Email"
-						placeholderTextColor="#A7A7A7"
-						keyboardType="email-address"
-						autoCapitalize="none"
-						style={styles.input}
-						value={email}
-						onChangeText={setEmail}
-					/>
-				</View>
-				<View style={styles.inputContainer}>
-					<TextInput
-						placeholder="Password"
-						placeholderTextColor="#A7A7A7"
-						secureTextEntry
-						style={styles.input}
-						value={password}
-						onChangeText={setPassword}
-					/>
-				</View>
-				<TouchableOpacity style={styles.button} onPress={handleLogin}>
-					<Text style={styles.buttonText}>Login</Text>
-				</TouchableOpacity>
-				{/* <TouchableOpacity style={styles.forgotContainer} onPress={() => console.log('Forgot Password pressed')}>
-					<Text style={styles.forgotText}>Forgot Password?</Text>
-				</TouchableOpacity> */}
+return (
+	<SafeAreaView style={styles.safeArea}>
+		<View style={styles.container}>
+			<Image source={require('./../../assets/images/react-logo.png')} style={styles.logo} resizeMode="contain" />
+			<Text style={styles.welcomeText}>Welcome Back!</Text>
+			<Text style={styles.header}>Login to your Account</Text>
+			<View style={styles.inputContainer}>
+				<TextInput
+					placeholder="Email"
+					placeholderTextColor="#A7A7A7"
+					keyboardType="email-address"
+					autoCapitalize="none"
+					style={styles.input}
+					value={email}
+					onChangeText={setEmail}
+				/>
 			</View>
-		</SafeAreaView>
-	);
+			<View style={styles.inputContainer}>
+				<TextInput
+					placeholder="Password"
+					placeholderTextColor="#A7A7A7"
+					secureTextEntry
+					style={styles.input}
+					value={password}
+					onChangeText={setPassword}
+				/>
+			</View>
+			<ButtonComponent title="Login" onPress={handleLogin} loading={isLoading} />
+			{/* <TouchableOpacity style={styles.button} onPress={handleLogin}>
+					<Text style={styles.buttonText}>Login</Text>
+				</TouchableOpacity> */}
+		</View>
+	</SafeAreaView>
+);
 }
 
 const styles = StyleSheet.create({
@@ -148,13 +151,5 @@ const styles = StyleSheet.create({
 		color: '#FFF',
 		fontSize: 18,
 		fontWeight: '600',
-	},
-	forgotContainer: {
-		marginTop: 15,
-	},
-	forgotText: {
-		fontSize: 14,
-		color: '#EF4444',
-		textDecorationLine: 'underline',
 	},
 });

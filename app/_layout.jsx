@@ -1,17 +1,18 @@
+// MainLayout.js
 import React, {useContext, useEffect} from 'react';
 import {Provider, useSelector} from 'react-redux';
 import {Stack, useRouter} from 'expo-router';
-import {store} from './../store/store';
+import {store, persistor} from './../store/store';
 import {ThemeContext} from '../context/ThemeContext';
+import {PersistGate} from 'redux-persist/integration/react';
 
 function MainLayoutInner() {
 	const {headerColor, headerTextColor, headerTextSize, headerButtonColor} = useContext(ThemeContext);
 	const router = useRouter();
-	// Assume your auth slice holds an "isAuthenticated" boolean flag in the Redux store.
 	const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
 
 	useEffect(() => {
-		// If the user is not authenticated, push them to the login screen.
+		// When not authenticated, redirect to login screen
 		if (!isAuthenticated) {
 			router.push('/auth/login');
 		}
@@ -39,7 +40,9 @@ function MainLayoutInner() {
 function MainLayout() {
 	return (
 		<Provider store={store}>
-			<MainLayoutInner />
+			<PersistGate loading={null} persistor={persistor}>
+				<MainLayoutInner />
+			</PersistGate>
 		</Provider>
 	);
 }

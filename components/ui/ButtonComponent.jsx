@@ -1,10 +1,10 @@
 import {View, Text} from 'react-native';
 import React from 'react';
 
-export default function TodaysConfirmedReservation() {
+export default function ButtonComponent() {
 	return (
 		<View>
-			<Text>TodaysConfirmedReservation</Text>
+			<Text>ButtonComponent</Text>
 		</View>
 	);
 }

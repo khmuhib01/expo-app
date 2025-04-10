@@ -13,18 +13,11 @@ const statsData = [
 		link: 'dashboard/todays-reservation',
 	},
 	{
-		label: "Today's Confirmed Reservations",
+		label: 'Upcoming Reservations',
 		value: 'N/A',
 		icon: 'checkmark-circle',
 		backgroundColor: '#C6F6CF',
-		link: 'dashboard/todays-confirmed-reservation',
-	},
-	{
-		label: "Today's Cancelled Reservations",
-		value: 'N/A',
-		icon: 'close-circle',
-		backgroundColor: '#FAD4D4',
-		link: 'dashboard/todays-cancelled-reservation',
+		link: 'dashboard/upcoming-reservation',
 	},
 ];
 

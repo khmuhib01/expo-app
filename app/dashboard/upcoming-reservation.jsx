@@ -1,10 +1,10 @@
 import {View, Text} from 'react-native';
 import React from 'react';
 
-export default function Menu() {
+export default function UpcomingReservation() {
 	return (
 		<View>
-			<Text>Menu</Text>
+			<Text>UpcomingReservation</Text>
 		</View>
 	);
 }

@@ -2,6 +2,7 @@ import React from 'react';
 import {View, Text, StyleSheet, ScrollView, TouchableOpacity} from 'react-native';
 import {Ionicons} from '@expo/vector-icons';
 import {useNavigation} from '@react-navigation/native';
+import {useSelector} from 'react-redux';
 import {Link} from 'expo-router';
 
 const statsData = [
@@ -23,6 +24,13 @@ const statsData = [
 
 export default function Home() {
 	const navigator = useNavigation();
+
+	const storeUser = useSelector((state) => state.auth.user);
+	const storeUserToken = useSelector((state) => state.auth.token);
+
+	console.log('storeUser', storeUser);
+	console.log('storeUserToken', storeUserToken);
+
 	return (
 		<ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
 			<View style={styles.statsContainer}>

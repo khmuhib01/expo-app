@@ -1,9 +1,12 @@
 import React, {useState} from 'react';
 import {View, TouchableOpacity, Text, StyleSheet, Modal, TouchableWithoutFeedback} from 'react-native';
 import {Ionicons} from '@expo/vector-icons';
+import {useNavigation} from '@react-navigation/native';
 
 export default function HeaderMenu({iconColor = '#fff'}) {
 	const [menuVisible, setMenuVisible] = useState(false);
+
+	const navigator = useNavigation();
 
 	const toggleMenu = () => {
 		setMenuVisible(!menuVisible);
@@ -11,6 +14,10 @@ export default function HeaderMenu({iconColor = '#fff'}) {
 
 	const handleOptionSelect = (option) => {
 		console.log(`Selected ${option}`);
+		if (option === 'Option 1') {
+			// Add logout logic here
+			navigator.navigate('auth/login');
+		}
 		setMenuVisible(false);
 	};
 

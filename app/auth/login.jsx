@@ -1,23 +1,20 @@
 import React, {useEffect, useState} from 'react';
-import {SafeAreaView, View, Text, TextInput, TouchableOpacity, StyleSheet, Alert} from 'react-native';
+import {SafeAreaView, View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Image} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
-import {useDispatch} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import {login} from './../../store/slice/auth/authSlice';
 import {postUserLogin} from './../../service/api';
 import {useRouter} from 'expo-router';
-import {useSelector} from 'react-redux';
 
 export default function Login() {
 	const [email, setEmail] = useState('khmuhib2013@gmail.com');
 	const [password, setPassword] = useState('password');
 	const navigation = useNavigation();
 	const dispatch = useDispatch();
-
 	const router = useRouter();
 	const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
 
 	useEffect(() => {
-		// If the user is already authenticated, redirect to the main app.
 		if (isAuthenticated) {
 			router.replace('/(tabs)');
 		}
@@ -49,77 +46,115 @@ export default function Login() {
 	};
 
 	return (
-		<SafeAreaView style={styles.container}>
-			<Text style={styles.header}>Login</Text>
-			<View style={styles.inputContainer}>
-				<TextInput
-					placeholder="Email"
-					placeholderTextColor="#999"
-					keyboardType="email-address"
-					autoCapitalize="none"
-					style={styles.input}
-					value={email}
-					onChangeText={setEmail}
-				/>
+		<SafeAreaView style={styles.safeArea}>
+			<View style={styles.container}>
+				<Image source={require('./../../assets/images/react-logo.png')} style={styles.logo} resizeMode="contain" />
+				<Text style={styles.welcomeText}>Welcome Back!</Text>
+				<Text style={styles.header}>Login to your Account</Text>
+				<View style={styles.inputContainer}>
+					<TextInput
+						placeholder="Email"
+						placeholderTextColor="#A7A7A7"
+						keyboardType="email-address"
+						autoCapitalize="none"
+						style={styles.input}
+						value={email}
+						onChangeText={setEmail}
+					/>
+				</View>
+				<View style={styles.inputContainer}>
+					<TextInput
+						placeholder="Password"
+						placeholderTextColor="#A7A7A7"
+						secureTextEntry
+						style={styles.input}
+						value={password}
+						onChangeText={setPassword}
+					/>
+				</View>
+				<TouchableOpacity style={styles.button} onPress={handleLogin}>
+					<Text style={styles.buttonText}>Login</Text>
+				</TouchableOpacity>
+				{/* <TouchableOpacity style={styles.forgotContainer} onPress={() => console.log('Forgot Password pressed')}>
+					<Text style={styles.forgotText}>Forgot Password?</Text>
+				</TouchableOpacity> */}
 			</View>
-			<View style={styles.inputContainer}>
-				<TextInput
-					placeholder="Password"
-					placeholderTextColor="#999"
-					secureTextEntry
-					style={styles.input}
-					value={password}
-					onChangeText={setPassword}
-				/>
-			</View>
-			<TouchableOpacity style={styles.button} onPress={handleLogin}>
-				<Text style={styles.buttonText}>Log In</Text>
-			</TouchableOpacity>
 		</SafeAreaView>
 	);
 }
 
 const styles = StyleSheet.create({
-	container: {
-		backgroundColor: '#fff',
+	safeArea: {
+		flex: 1,
+		backgroundColor: '#F7F8FA',
 		justifyContent: 'center',
+	},
+	container: {
 		width: '90%',
-		padding: 20,
 		alignSelf: 'center',
-		marginTop: 50,
-		borderRadius: 8,
-		borderColor: '#ccc',
+		backgroundColor: '#FFFFFF',
 		borderWidth: 1,
+		borderColor: '#ccc',
+		borderRadius: 12,
+		paddingVertical: 40,
+		paddingHorizontal: 20,
+		shadowColor: '#ccc',
+		shadowOffset: {width: 0, height: 4},
+		shadowOpacity: 0.1,
+		shadowRadius: 10,
+		elevation: 5,
+		alignItems: 'center',
 	},
-	header: {
-		fontSize: 32,
-		fontWeight: 'bold',
-		alignSelf: 'center',
-		marginBottom: 40,
-	},
-	inputContainer: {
+	logo: {
+		width: 100,
+		height: 100,
 		marginBottom: 20,
 	},
+	welcomeText: {
+		fontSize: 18,
+		color: '#555',
+		marginBottom: 10,
+	},
+	header: {
+		fontSize: 24,
+		fontWeight: '700',
+		color: '#333',
+		marginBottom: 30,
+		textAlign: 'center',
+	},
+	inputContainer: {
+		width: '100%',
+		marginBottom: 15,
+	},
 	input: {
-		borderColor: '#ccc',
-		borderWidth: 1,
-		borderRadius: 8,
+		backgroundColor: '#F7F8FA',
 		paddingVertical: 12,
 		paddingHorizontal: 16,
+		borderRadius: 8,
 		fontSize: 16,
 		color: '#333',
+		borderWidth: 1,
+		borderColor: '#E5E5E5',
 	},
 	button: {
 		backgroundColor: '#EF4444',
+		paddingVertical: 15,
 		borderRadius: 8,
-		paddingVertical: 14,
-		paddingHorizontal: 20,
-		marginTop: 10,
+		width: '100%',
+		alignItems: 'center',
+		marginTop: 20,
 	},
 	buttonText: {
-		color: '#fff',
+		color: '#FFF',
 		fontSize: 18,
 		fontWeight: '600',
-		alignSelf: 'center',
+	},
+	forgotContainer: {
+		marginTop: 15,
+	},
+	forgotText: {
+		fontSize: 14,
+		color: '#EF4444',
+		textDecorationLine: 'underline',
 	},
 });

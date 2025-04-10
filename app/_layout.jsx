@@ -31,7 +31,7 @@ function MainLayoutInner() {
 				name="dashboard/upcoming-reservation"
 				options={{headerShown: true, title: 'Upcoming Reservations'}}
 			/>
-			<Stack.Screen name="auth/login" options={{headerShown: true, title: 'Login'}} />
+			<Stack.Screen name="auth/login" options={{headerShown: false, title: 'Login'}} />
 		</Stack>
 	);
 }

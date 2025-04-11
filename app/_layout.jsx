@@ -24,16 +24,11 @@ function MainLayoutInner() {
 	};
 
 	return (
-		<Stack screenOptions={screenOptions}>
+		<Stack screenOptions={screenOptions} initialRouteName={isAuthenticated ? '(tabs)' : 'auth/login'}>
 			<Stack.Screen name="(tabs)" options={{headerShown: false, title: 'Table Bookings'}} />
-			<Stack.Screen name="dashboard/todays-reservation" options={{headerShown: true, title: "Today's Reservations"}} />
-			<Stack.Screen
-				name="dashboard/upcoming-reservation"
-				options={{headerShown: true, title: 'Upcoming Reservations'}}
-			/>
 			<Stack.Screen name="auth/login" options={{headerShown: false, title: 'Login'}} />
 			<Stack.Screen
-				name="dashboard/[details]"
+				name="reservation/[details]"
 				options={{
 					presentation: 'formSheet',
 					gestureDirection: 'vertical',

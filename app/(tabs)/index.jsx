@@ -29,61 +29,71 @@ export default function Home() {
 	});
 
 	const router = useRouter();
-	const storeUserId = useSelector((state) => state.auth?.user?.uuid);
-	const storeRestaurantId = useSelector((state) => state.auth?.user?.res_uuid);
+    const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
+		const storeUserId = useSelector((state) => state.auth?.user?.uuid);
+		const storeRestaurantId = useSelector((state) => state.auth?.user?.res_uuid);
 
-	const formatDate = (dateObj) => {
-		const day = dateObj.getDate().toString().padStart(2, '0');
-		const month = (dateObj.getMonth() + 1).toString().padStart(2, '0');
-		const year = dateObj.getFullYear();
-		return `${day}/${month}/${year}`;
-	};
+		const formatDate = (dateObj) => {
+			const day = dateObj.getDate().toString().padStart(2, '0');
+			const month = (dateObj.getMonth() + 1).toString().padStart(2, '0');
+			const year = dateObj.getFullYear();
+			return `${day}/${month}/${year}`;
+		};
 
-	const parseDate = (dateString) => {
-		const [day, month, year] = dateString.split('/').map(Number);
-		return new Date(year, month - 1, day);
-	};
+		const parseDate = (dateString) => {
+			const [day, month, year] = dateString.split('/').map(Number);
+			return new Date(year, month - 1, day);
+		};
 
-	const getFormattedTime = () => {
-		const now = new Date();
-		const hours = now.getHours().toString().padStart(2, '0');
-		const minutes = now.getMinutes().toString().padStart(2, '0');
-		return `${hours}:${minutes}`;
-	};
+		const getFormattedTime = () => {
+			const now = new Date();
+			const hours = now.getHours().toString().padStart(2, '0');
+			const minutes = now.getMinutes().toString().padStart(2, '0');
+			return `${hours}:${minutes}`;
+		};
 
-	const filterReservations = useCallback((reservations, filterType) => {
-		const today = new Date();
-		today.setHours(0, 0, 0, 0);
+		const filterReservations = useCallback((reservations, filterType) => {
+			const today = new Date();
+			today.setHours(0, 0, 0, 0);
 
-		return reservations.filter((res) => {
-			try {
-				const resDate = parseDate(res.reservation_date);
-				if (filterType === 'today') {
-					return resDate.getTime() === today.getTime();
-				} else {
-					return resDate > today;
+			return reservations.filter((res) => {
+				try {
+					const resDate = parseDate(res.reservation_date);
+					if (filterType === 'today') {
+						return resDate.getTime() === today.getTime();
+					} else {
+						return resDate > today;
+					}
+				} catch (e) {
+					console.error('Error parsing date:', res.reservation_date, e);
+					return false;
 				}
-			} catch (e) {
-				console.error('Error parsing date:', res.reservation_date, e);
-				return false;
-			}
-		});
-	}, []);
+			});
+		}, []);
 
-	const refreshReservations = useCallback(async () => {
-		try {
-			setIsListLoading(true);
-			const response = await getGuestReservationInfo(storeRestaurantId);
-			const reservations = response?.data?.data || [];
-			setAllReservations(reservations);
-			const filtered = filterReservations(reservations, activeFilter);
-			setFilteredReservations(filtered);
-		} catch (error) {
-			console.error('Error refreshing reservations:', error);
-		} finally {
-			setIsListLoading(false);
-		}
-	}, [storeRestaurantId, activeFilter, filterReservations]);
+		const refreshReservations = useCallback(async () => {
+			if (!isAuthenticated) {
+				console.log('Not authenticated, skipping refresh');
+				return;
+			}
+
+			try {
+				setIsListLoading(true);
+				const response = await getGuestReservationInfo(storeRestaurantId);
+				const reservations = response?.data?.data || [];
+				setAllReservations(reservations);
+				const filtered = filterReservations(reservations, activeFilter);
+				setFilteredReservations(filtered);
+			} catch (error) {
+				console.error('Error refreshing reservations:', error);
+				if (error.response?.status === 401) {
+					// Handle unauthorized error
+					router.push('/auth/login');
+				}
+			} finally {
+				setIsListLoading(false);
+			}
+		}, [storeRestaurantId, activeFilter, filterReservations, isAuthenticated, router]);
 
 	const loadInitialData = useCallback(async () => {
 		try {

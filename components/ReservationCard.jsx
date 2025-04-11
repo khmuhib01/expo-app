@@ -1,13 +1,18 @@
-// components/ReservationCard.js
+// components/ReservationCard.jsx
 import React from 'react';
-import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
+import {View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator} from 'react-native';
 import {Ionicons} from '@expo/vector-icons';
-import {useNavigation} from '@react-navigation/native';
-import {useRouter} from 'expo-router';
 
-export default function ReservationCard({item}) {
-	const navigation = useNavigation();
-	const router = useRouter();
+export default function ReservationCard({
+	item,
+	handleAcceptPress,
+	handleCancelPress,
+	handleViewPress,
+	handleCheckInPress,
+	handleCheckOutPress,
+	handleRejectPress,
+	isLoading,
+}) {
 	return (
 		<View style={styles.card}>
 			<View style={styles.topRow}>
@@ -19,7 +24,7 @@ export default function ReservationCard({item}) {
 					<View style={styles.infoRow}>
 						<Ionicons name="people-outline" size={16} color="#555" style={styles.infoIcon} />
 						<Text style={styles.infoText}>
-							{item.number_of_people} Guest{item.guests > 1 && 's'}
+							{item.number_of_people} Guest{item.number_of_people > 1 ? 's' : ''}
 						</Text>
 					</View>
 					<View style={styles.infoRow}>
@@ -48,25 +53,71 @@ export default function ReservationCard({item}) {
 				</View>
 			</View>
 
-			<View style={styles.buttonRow}>
-				<TouchableOpacity
-					style={[styles.button, styles.viewButton]}
-					onPress={() =>
-						router.push({
-							pathname: '/dashboard/[details]',
-							params: {reservation: JSON.stringify(item)}, // 🔑 stringify
-						})
-					}
-				>
+			<ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.buttonRow}>
+				<TouchableOpacity style={[styles.button, styles.viewButton]} onPress={() => handleViewPress(item)}>
 					<Text style={[styles.buttonText, styles.viewButtonText]}>View</Text>
 				</TouchableOpacity>
-				<TouchableOpacity style={[styles.button, styles.cancelButton]}>
-					<Text style={[styles.buttonText, styles.cancelButtonText]}>Cancel</Text>
-				</TouchableOpacity>
-				<TouchableOpacity style={[styles.button, styles.checkInButton]}>
-					<Text style={[styles.buttonText, styles.checkInButtonText]}>Check In</Text>
-				</TouchableOpacity>
-			</View>
+
+				{item.status === 'pending' && (
+					<>
+						<TouchableOpacity
+							style={[styles.button, styles.rejectButton]}
+							onPress={() => {
+								handleRejectPress(item.uuid);
+							}}
+						>
+							<View style={styles.contentContainer}>
+								{isLoading && <ActivityIndicator color="#FFF" style={styles.loader} />}
+								<Text style={[styles.buttonText, styles.rejectButtonText]}>Reject</Text>
+							</View>
+						</TouchableOpacity>
+						<TouchableOpacity
+							style={[styles.button, styles.acceptButton]}
+							onPress={() => {
+								handleAcceptPress(item.uuid);
+							}}
+						>
+							<View style={styles.contentContainer}>
+								{isLoading && <ActivityIndicator color="#FFF" style={styles.loader} />}
+								<Text style={[styles.buttonText, styles.acceptButtonText]}>Accept</Text>
+							</View>
+						</TouchableOpacity>
+					</>
+				)}
+
+				{item.status === 'confirmed' && (
+					<>
+						<TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => handleCancelPress(item.uuid)}>
+							<View style={styles.contentContainer}>
+								{isLoading && <ActivityIndicator color="#FFF" style={styles.loader} />}
+								<Text style={[styles.buttonText, styles.cancelButtonText]}>Cancel</Text>
+							</View>
+						</TouchableOpacity>
+
+						<TouchableOpacity
+							style={[styles.button, styles.checkInButton]}
+							onPress={() => handleCheckInPress(item.uuid)}
+						>
+							<View style={styles.contentContainer}>
+								{isLoading && <ActivityIndicator color="#FFF" style={styles.loader} />}
+								<Text style={[styles.buttonText, styles.checkInButtonText]}>Checked In</Text>
+							</View>
+						</TouchableOpacity>
+					</>
+				)}
+
+				{item.status === 'check_in' && (
+					<TouchableOpacity
+						style={[styles.button, styles.checkOutButton]}
+						onPress={() => handleCheckOutPress(item.uuid)}
+					>
+						<View style={styles.contentContainer}>
+							{isLoading && <ActivityIndicator color="#FFF" style={styles.loader} />}
+							<Text style={[styles.buttonText, styles.checkOutButtonText]}>Checked Out</Text>
+						</View>
+					</TouchableOpacity>
+				)}
+			</ScrollView>
 		</View>
 	);
 }
@@ -82,6 +133,11 @@ const styles = StyleSheet.create({
 		shadowOffset: {width: 0, height: 1},
 		shadowOpacity: 0.1,
 		shadowRadius: 2,
+	},
+	contentContainer: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'center',
 	},
 	topRow: {
 		flexDirection: 'row',
@@ -135,36 +191,67 @@ const styles = StyleSheet.create({
 		fontWeight: '600',
 	},
 	buttonRow: {
-		flexDirection: 'row',
-		justifyContent: 'flex-start',
+		paddingTop: 8,
+		paddingBottom: 4,
 	},
 	button: {
 		borderRadius: 4,
 		borderWidth: 1,
-		paddingVertical: 8,
-		paddingHorizontal: 16,
+		paddingVertical: 6,
+		paddingHorizontal: 12,
 		marginRight: 8,
 	},
+
 	buttonText: {
 		fontWeight: '600',
 		fontSize: 14,
 	},
+
 	viewButton: {
 		borderColor: '#28a745',
+		backgroundColor: '#E6F4EA',
 	},
 	viewButtonText: {
-		color: '#28a745',
+		color: '#1A7F3B',
 	},
+
+	acceptButton: {
+		borderColor: '#28a745',
+		backgroundColor: '#D1FAE5',
+	},
+	acceptButtonText: {
+		color: '#065F46',
+	},
+
+	rejectButton: {
+		borderColor: '#dc3545',
+		backgroundColor: '#FEE2E2',
+	},
+	rejectButtonText: {
+		color: '#991B1B',
+	},
+
 	cancelButton: {
 		borderColor: '#dc3545',
+		backgroundColor: '#FEF3C7',
 	},
 	cancelButtonText: {
-		color: '#dc3545',
+		color: '#92400E',
 	},
+
 	checkInButton: {
 		borderColor: '#0d6efd',
+		backgroundColor: '#DBEAFE',
 	},
 	checkInButtonText: {
-		color: '#0d6efd',
+		color: '#1D4ED8',
+	},
+
+	checkOutButton: {
+		borderColor: '#D97706',
+		backgroundColor: '#FDE68A',
+	},
+	checkOutButtonText: {
+		color: '#B45309',
 	},
 });

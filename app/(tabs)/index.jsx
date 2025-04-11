@@ -4,6 +4,7 @@ import {Ionicons} from '@expo/vector-icons';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
 import {getGuestReservationInfo} from '../../service/api';
+import PopupModal from '../../components/PopupModal';
 
 export default function Home() {
 	const [todaysReservations, setTodaysReservations] = useState([]);
@@ -80,32 +81,37 @@ export default function Home() {
 	];
 
 	return (
-		<ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-			{isLoading ? (
-				<View style={styles.loadingContainer}>
-					<ActivityIndicator size="large" color="#333" />
-					<Text style={{marginTop: 10, color: '#666'}}>Loading Reservations...</Text>
-				</View>
-			) : (
-				<View style={styles.statsContainer}>
-					{statsData.map((item, index) => (
-						<TouchableOpacity
-							key={index}
-							style={[styles.card, {backgroundColor: item.backgroundColor}]}
-							onPress={() =>
-								navigation.navigate(item.link, {
-									data: item.data,
-								})
-							}
-						>
-							<Ionicons name={item.icon} size={24} color="#333" style={{marginBottom: 8}} />
-							<Text style={styles.cardValue}>{item.value}</Text>
-							<Text style={styles.cardLabel}>{item.label}</Text>
-						</TouchableOpacity>
-					))}
-				</View>
-			)}
-		</ScrollView>
+		<>
+			<ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+				{isLoading ? (
+					<View style={styles.loadingContainer}>
+						<ActivityIndicator size="large" color="#333" />
+						<Text style={{marginTop: 10, color: '#666'}}>Loading Reservations...</Text>
+					</View>
+				) : (
+					<View style={styles.statsContainer}>
+						{statsData.map((item, index) => (
+							<TouchableOpacity
+								key={index}
+								style={[styles.card, {backgroundColor: item.backgroundColor}]}
+								onPress={() =>
+									navigation.navigate(item.link, {
+										data: item.data,
+									})
+								}
+							>
+								<Ionicons name={item.icon} size={24} color="#333" style={{marginBottom: 8}} />
+								<Text style={styles.cardValue}>{item.value}</Text>
+								<Text style={styles.cardLabel}>{item.label}</Text>
+							</TouchableOpacity>
+						))}
+					</View>
+				)}
+			</ScrollView>
+			{/* <View style={{flex: 1, justifyContent: 'flex-end'}}>
+				<PopupModal />
+			</View> */}
+		</>
 	);
 }
 

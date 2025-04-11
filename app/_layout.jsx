@@ -32,6 +32,7 @@ function MainLayoutInner() {
 				options={{headerShown: true, title: 'Upcoming Reservations'}}
 			/>
 			<Stack.Screen name="auth/login" options={{headerShown: false, title: 'Login'}} />
+			<Stack.Screen name="modal" options={{headerShown: true, title: 'Modal'}} />
 			<Stack.Screen
 				name="dashboard/[details]"
 				options={{

@@ -20,6 +20,9 @@ export default function HeaderMenu({iconColor = '#fff'}) {
 		} else if (option === 'Option 2') {
 			// Add logout logic here
 			navigator.navigate('test');
+		} else if (option === 'Option 3') {
+			// Add logout logic here
+			navigator.navigate('test');
 		}
 		setMenuVisible(false);
 	};

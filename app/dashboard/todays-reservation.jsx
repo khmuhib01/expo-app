@@ -32,11 +32,23 @@ export default function TodaysReservation() {
 	const storeUserId = useSelector((state) => state.auth?.user?.uuid);
 	const storeRestaurantId = useSelector((state) => state.auth?.user?.res_uuid);
 
+	const formatDate = (dateObj) => {
+		const day = dateObj.getDate().toString().padStart(2, '0');
+		const month = (dateObj.getMonth() + 1).toString().padStart(2, '0');
+		const year = dateObj.getFullYear();
+		return `${day}/${month}/${year}`;
+	};
+
 	const refreshReservations = async () => {
 		try {
 			setIsLoading(true);
 			const response = await getGuestReservationInfo(storeRestaurantId);
-			setReservationsData(response.data.data);
+			const reservations = response?.data?.data || [];
+			const today = formatDate(new Date());
+
+			// Filter to only show today's reservations
+			const todayList = reservations.filter((res) => res.reservation_date === today);
+			setReservationsData(todayList);
 		} catch (error) {
 			console.error('Error refreshing reservations:', error);
 		} finally {

@@ -1,18 +1,36 @@
 import React, {useEffect, useState, useCallback} from 'react';
-import {View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator} from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
-import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import {View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity} from 'react-native';
+import {useRouter} from 'expo-router';
 import {useSelector} from 'react-redux';
-import {getGuestReservationInfo} from '../../service/api';
+import ReservationCard from '../../components/ReservationCard';
+import {
+	getAcceptReservation,
+	getCancelReservation,
+	getCheckInReservation,
+	getCheckOutReservation,
+	getRejectReservation,
+	getGuestReservationInfo,
+} from '../../service/api';
 import PopupModal from '../../components/PopupModal';
 
 export default function Home() {
-	const [todaysReservations, setTodaysReservations] = useState([]);
-	const [upcomingReservations, setUpcomingReservations] = useState([]);
-	const [isLoading, setIsLoading] = useState(false);
-	const navigation = useNavigation();
+	const [allReservations, setAllReservations] = useState([]);
+	const [filteredReservations, setFilteredReservations] = useState([]);
+	const [isInitialLoading, setIsInitialLoading] = useState(true);
+	const [isListLoading, setIsListLoading] = useState(false);
+	const [isProcessing, setIsProcessing] = useState(false);
+	const [activeFilter, setActiveFilter] = useState('today');
+	const [modalConfig, setModalConfig] = useState({
+		visible: false,
+		title: '',
+		message: '',
+		action: null,
+		reservationId: null,
+	});
 
-	const storeUser = useSelector((state) => state.auth.user);
+	const router = useRouter();
+	const storeUserId = useSelector((state) => state.auth?.user?.uuid);
+	const storeRestaurantId = useSelector((state) => state.auth?.user?.res_uuid);
 
 	const formatDate = (dateObj) => {
 		const day = dateObj.getDate().toString().padStart(2, '0');
@@ -21,133 +39,301 @@ export default function Home() {
 		return `${day}/${month}/${year}`;
 	};
 
-	const fetchReservationsInfo = useCallback(async () => {
-		if (!storeUser?.res_uuid) return;
+	const parseDate = (dateString) => {
+		const [day, month, year] = dateString.split('/').map(Number);
+		return new Date(year, month - 1, day);
+	};
 
-		try {
-			setIsLoading(true);
-			const response = await getGuestReservationInfo(storeUser.res_uuid);
-			const reservations = response?.data?.data || [];
-			const today = formatDate(new Date());
+	const getFormattedTime = () => {
+		const now = new Date();
+		const hours = now.getHours().toString().padStart(2, '0');
+		const minutes = now.getMinutes().toString().padStart(2, '0');
+		return `${hours}:${minutes}`;
+	};
 
-			const todayList = [];
-			const upcomingList = [];
+	const filterReservations = useCallback((reservations, filterType) => {
+		const today = new Date();
+		today.setHours(0, 0, 0, 0);
 
-			reservations.forEach((res) => {
-				if (res.reservation_date === today) {
-					todayList.push(res);
-				} else if (res.reservation_date > today) {
-					upcomingList.push(res);
+		return reservations.filter((res) => {
+			try {
+				const resDate = parseDate(res.reservation_date);
+				if (filterType === 'today') {
+					return resDate.getTime() === today.getTime();
+				} else {
+					return resDate > today;
 				}
-			});
+			} catch (e) {
+				console.error('Error parsing date:', res.reservation_date, e);
+				return false;
+			}
+		});
+	}, []);
 
-			setTodaysReservations(todayList);
-			setUpcomingReservations(upcomingList);
+	const refreshReservations = useCallback(async () => {
+		try {
+			const response = await getGuestReservationInfo(storeRestaurantId);
+			const reservations = response?.data?.data || [];
+			setAllReservations(reservations);
+			const filtered = filterReservations(reservations, activeFilter);
+			setFilteredReservations(filtered);
 		} catch (error) {
-			console.error('Reservation error:', error.response?.data?.message || error.message);
-		} finally {
-			setIsLoading(false);
+			console.error('Error refreshing reservations:', error);
 		}
-	}, [storeUser?.res_uuid]);
+	}, [storeRestaurantId, activeFilter, filterReservations]);
+
+	const loadInitialData = useCallback(async () => {
+		try {
+			setIsInitialLoading(true);
+			await refreshReservations();
+		} finally {
+			setIsInitialLoading(false);
+		}
+	}, [refreshReservations]);
 
 	useEffect(() => {
-		fetchReservationsInfo();
-	}, [fetchReservationsInfo]);
+		loadInitialData();
+	}, [loadInitialData]);
 
-	// 👇 Refresh when screen is focused
-	useFocusEffect(
-		useCallback(() => {
-			fetchReservationsInfo();
-		}, [fetchReservationsInfo])
-	);
+	const handleFilterChange = async (filterType) => {
+		try {
+			setIsListLoading(true);
+			setActiveFilter(filterType);
+			const filtered = filterReservations(allReservations, filterType);
+			setFilteredReservations(filtered);
+		} finally {
+			setIsListLoading(false);
+		}
+	};
 
-	const statsData = [
-		{
-			label: "Today's Reservations",
-			data: todaysReservations,
-			value: todaysReservations.length,
-			icon: 'calendar',
-			backgroundColor: '#B9CEF5',
-			link: 'dashboard/todays-reservation',
-		},
-		{
-			label: 'Upcoming Reservations',
-			data: upcomingReservations,
-			value: upcomingReservations.length,
-			icon: 'checkmark-circle',
-			backgroundColor: '#C6F6CF',
-			link: 'dashboard/upcoming-reservation',
-		},
-	];
+	const getFilteredCounts = useCallback(() => {
+		const today = new Date();
+		today.setHours(0, 0, 0, 0);
+
+		let todayCount = 0;
+		let upcomingCount = 0;
+
+		allReservations.forEach((res) => {
+			try {
+				const resDate = parseDate(res.reservation_date);
+				if (resDate.getTime() === today.getTime()) {
+					todayCount++;
+				} else if (resDate > today) {
+					upcomingCount++;
+				}
+			} catch (e) {
+				console.error('Error counting reservation:', res.reservation_date, e);
+			}
+		});
+
+		return {todayCount, upcomingCount};
+	}, [allReservations]);
+
+	const {todayCount, upcomingCount} = getFilteredCounts();
+
+	const showConfirmationModal = (action, reservationId) => {
+		const messages = {
+			accept: {
+				title: 'Confirm Acceptance',
+				message: 'Are you sure you want to accept this reservation?',
+			},
+			reject: {
+				title: 'Confirm Rejection',
+				message: 'Are you sure you want to reject this reservation?',
+			},
+			cancel: {
+				title: 'Confirm Cancellation',
+				message: 'Are you sure you want to cancel this reservation?',
+			},
+			checkin: {
+				title: 'Confirm Check-In',
+				message: 'Are you sure you want to check in this guest?',
+			},
+			checkout: {
+				title: 'Confirm Check-Out',
+				message: 'Are you sure you want to check out this guest?',
+			},
+		};
+
+		setModalConfig({
+			visible: true,
+			...messages[action],
+			action,
+			reservationId,
+		});
+	};
+
+	const handleConfirmAction = async () => {
+		try {
+			setIsProcessing(true);
+			const {action, reservationId} = modalConfig;
+			let data;
+
+			switch (action) {
+				case 'accept':
+					data = await getAcceptReservation(storeRestaurantId, reservationId, storeUserId);
+					break;
+				case 'reject':
+					data = await getRejectReservation(storeRestaurantId, reservationId, storeUserId);
+					break;
+				case 'cancel':
+					data = await getCancelReservation(storeRestaurantId, reservationId, storeUserId);
+					break;
+				case 'checkin':
+					const checkInTime = getFormattedTime();
+					data = await getCheckInReservation(storeRestaurantId, reservationId, checkInTime);
+					break;
+				case 'checkout':
+					const checkOutTime = getFormattedTime();
+					data = await getCheckOutReservation(storeRestaurantId, reservationId, checkOutTime);
+					break;
+				default:
+					break;
+			}
+
+			console.log(`${action} successful:`, data);
+			await refreshReservations();
+		} catch (error) {
+			console.error(`Error in ${modalConfig.action}:`, error);
+		} finally {
+			setIsProcessing(false);
+			setModalConfig({...modalConfig, visible: false});
+		}
+	};
+
+	const handleViewPress = (item) => {
+		router.push({
+			pathname: '/dashboard/[details]',
+			params: {reservation: JSON.stringify(item)},
+		});
+	};
+
+	if (isInitialLoading) {
+		return (
+			<View style={styles.loadingContainer}>
+				<ActivityIndicator size="large" color="#333" />
+				<Text style={styles.loadingText}>Loading reservations...</Text>
+			</View>
+		);
+	}
 
 	return (
 		<>
-			<ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-				{isLoading ? (
-					<View style={styles.loadingContainer}>
-						<ActivityIndicator size="large" color="#333" />
-						<Text style={{marginTop: 10, color: '#666'}}>Loading Reservations...</Text>
+			<View style={styles.container}>
+				<View style={styles.filterContainer}>
+					<TouchableOpacity
+						style={[styles.filterButton, activeFilter === 'today' && styles.activeFilter]}
+						onPress={() => handleFilterChange('today')}
+					>
+						<Text style={[styles.filterText, activeFilter === 'today' && styles.activeFilterText]}>
+							Today's ({todayCount})
+						</Text>
+					</TouchableOpacity>
+
+					<TouchableOpacity
+						style={[styles.filterButton, activeFilter === 'upcoming' && styles.activeFilter]}
+						onPress={() => handleFilterChange('upcoming')}
+					>
+						<Text style={[styles.filterText, activeFilter === 'upcoming' && styles.activeFilterText]}>
+							Upcoming ({upcomingCount})
+						</Text>
+					</TouchableOpacity>
+				</View>
+
+				{isListLoading ? (
+					<View style={styles.listLoadingContainer}>
+						<ActivityIndicator size="small" color="#333" />
+					</View>
+				) : filteredReservations.length === 0 ? (
+					<View style={styles.emptyContainer}>
+						<Text style={styles.emptyText}>
+							{activeFilter === 'today' ? 'No reservations for today' : 'No upcoming reservations'}
+						</Text>
 					</View>
 				) : (
-					<View style={styles.statsContainer}>
-						{statsData.map((item, index) => (
-							<TouchableOpacity
-								key={index}
-								style={[styles.card, {backgroundColor: item.backgroundColor}]}
-								onPress={() =>
-									navigation.navigate(item.link, {
-										data: item.data,
-									})
-								}
-							>
-								<Ionicons name={item.icon} size={24} color="#333" style={{marginBottom: 8}} />
-								<Text style={styles.cardValue}>{item.value}</Text>
-								<Text style={styles.cardLabel}>{item.label}</Text>
-							</TouchableOpacity>
-						))}
-					</View>
+					<FlatList
+						data={filteredReservations}
+						keyExtractor={(item) => item.uuid || item.id?.toString()}
+						renderItem={({item}) => (
+							<ReservationCard
+								item={item}
+								onAccept={() => showConfirmationModal('accept', item.uuid)}
+								onReject={() => showConfirmationModal('reject', item.uuid)}
+								onCancel={() => showConfirmationModal('cancel', item.uuid)}
+								onCheckIn={() => showConfirmationModal('checkin', item.uuid)}
+								onCheckOut={() => showConfirmationModal('checkout', item.uuid)}
+								onView={() => handleViewPress(item)}
+							/>
+						)}
+						contentContainerStyle={styles.listContainer}
+						refreshing={isListLoading}
+						onRefresh={refreshReservations}
+					/>
 				)}
-			</ScrollView>
-			{/* <View style={{flex: 1, justifyContent: 'flex-end'}}>
-				<PopupModal />
-			</View> */}
+			</View>
+
+			<PopupModal
+				isVisible={modalConfig.visible}
+				onClose={() => !isProcessing && setModalConfig({...modalConfig, visible: false})}
+				title={modalConfig.title}
+				message={modalConfig.message}
+				isLoading={isProcessing}
+				loadingButtonIndex={1}
+				buttons={[
+					{
+						text: 'Cancel',
+						onPress: () => setModalConfig({...modalConfig, visible: false}),
+						style: {backgroundColor: '#f44336'},
+						textStyle: {fontSize: 16},
+					},
+					{
+						text: 'Confirm',
+						onPress: handleConfirmAction,
+						style: {backgroundColor: '#4CAF50'},
+						textStyle: {fontSize: 16},
+					},
+				]}
+			/>
 		</>
 	);
 }
 
 const styles = StyleSheet.create({
-	container: {
-		flex: 1,
-	},
-	contentContainer: {
-		padding: 16,
-	},
-	statsContainer: {
+	container: {flex: 1, backgroundColor: '#F3F3F3'},
+	filterContainer: {
 		flexDirection: 'row',
-		flexWrap: 'wrap',
-		justifyContent: 'space-between',
+		justifyContent: 'space-around',
+		paddingVertical: 12,
+		backgroundColor: '#fff',
+		borderBottomWidth: 1,
+		borderBottomColor: '#eee',
 	},
-	card: {
-		width: '48%',
-		borderRadius: 8,
-		marginBottom: 16,
-		paddingVertical: 16,
-		paddingHorizontal: 12,
-		alignItems: 'center',
+	filterButton: {
+		paddingHorizontal: 16,
+		paddingVertical: 8,
+		borderRadius: 20,
 	},
-	cardValue: {
-		fontSize: 22,
-		fontWeight: 'bold',
-		marginBottom: 4,
+	activeFilter: {
+		backgroundColor: '#4CAF50',
 	},
-	cardLabel: {
-		fontSize: 14,
-		textAlign: 'center',
+	filterText: {
+		fontSize: 16,
+		color: '#555',
+		fontWeight: '500',
 	},
-	loadingContainer: {
+	activeFilterText: {
+		color: '#fff',
+		fontWeight: '600',
+	},
+	listContainer: {paddingTop: 8, paddingHorizontal: 16, paddingBottom: 16},
+	loadingContainer: {flex: 1, justifyContent: 'center', alignItems: 'center'},
+	listLoadingContainer: {paddingVertical: 20, justifyContent: 'center', alignItems: 'center'},
+	loadingText: {marginTop: 10, color: '#666'},
+	emptyContainer: {
 		flex: 1,
 		justifyContent: 'center',
 		alignItems: 'center',
-		height: 200,
+		paddingTop: 20,
 	},
+	emptyText: {color: '#888', fontSize: 16},
 });

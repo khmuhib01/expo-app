@@ -33,6 +33,16 @@ export default function TabLayout() {
 				}}
 			/>
 			<Tabs.Screen
+				name="reservations"
+				options={{
+					headerShown: true,
+					title: 'Reservation',
+					tabBarIcon: ({focused, color, size}) => (
+						<Ionicons name={focused ? 'book' : 'book-outline'} size={size} color={color} />
+					),
+				}}
+			/>
+			<Tabs.Screen
 				name="settings"
 				options={{
 					headerShown: true,

@@ -1,23 +1,11 @@
 // apiService.js
 
-import axios from 'axios';
-import {store} from '../store/store';
+import axiosInstance from './axiosInstance';
 
-const baseURL = 'https://apiservice.tablebookings.co.uk/api/v1/';
-
-// Helper function to generate headers with the current token.
-const getAuthHeaders = () => {
-	const token = store.getState().auth.token;
-	return {
-		'Content-Type': 'application/json',
-		Authorization: token ? `Bearer ${token}` : '',
-	};
-};
-
-const postUserLogin = async (data) => {
+// LOGIN API
+export const postUserLogin = async (data) => {
 	try {
-		// Axios automatically stringifies the data to JSON
-		const response = await axios.post(`${baseURL}user/login`, data, {
+		const response = await axiosInstance.post('/user/login', data, {
 			headers: {'Content-Type': 'application/json'},
 		});
 		return response.data;
@@ -27,14 +15,16 @@ const postUserLogin = async (data) => {
 	}
 };
 
-const getGuestReservationInfo = async (restaurantId) => {
+export const getGuestReservationInfo = async (restaurantId) => {
 	try {
-		const response = await axios.get(`${baseURL}secure/restaurant/reservation-for-restaurant`, {
+		const response = await axiosInstance.get('/secure/restaurant/reservation-for-restaurant', {
 			params: {
 				rest_uuid: restaurantId,
 				params: 'info',
 			},
-			headers: getAuthHeaders(),
+			headers: {
+				'Content-Type': 'application/json',
+			},
 		});
 		return response.data;
 	} catch (error) {
@@ -42,5 +32,3 @@ const getGuestReservationInfo = async (restaurantId) => {
 		throw error;
 	}
 };
-
-export {postUserLogin, getGuestReservationInfo};

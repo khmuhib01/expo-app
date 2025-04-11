@@ -3,6 +3,7 @@ import {View, Text, StyleSheet, FlatList, TouchableOpacity} from 'react-native';
 import {Ionicons} from '@expo/vector-icons';
 import {getGuestReservationInfo} from '../../service/api';
 import {useSelector} from 'react-redux';
+import ReservationCard from '../../components/ReservationCard';
 
 const reservationsData = [
 	{
@@ -55,10 +56,6 @@ export default function Reservations() {
 
 	const restaurantId = useSelector((state) => state.auth.user.res_uuid);
 
-	console.log('res_uuid', JSON.stringify(restaurantId));
-
-	console.log('reservations', reservations.data);
-
 	const filteredData = reservationsData.filter((item) => {
 		if (selectedFilter === 'Today') {
 			return item.date === '10/04/2025';
@@ -77,6 +74,7 @@ export default function Reservations() {
 
 	// Fetch reservations on component mount
 	useEffect(() => {
+		console.log('restaurantId', restaurantId);
 		fetchReservations();
 	}, []);
 
@@ -89,59 +87,7 @@ export default function Reservations() {
 		}
 	};
 
-	const renderItem = ({item}) => (
-		<View style={styles.card}>
-			<View style={styles.topRow}>
-				<View style={styles.tableBadge}>
-					<Text style={styles.badgeLabel}>TABLE</Text>
-					<Text style={styles.badgeValue}>{item.table}</Text>
-				</View>
-				<View style={styles.infoContainer}>
-					<View style={styles.infoRow}>
-						<Ionicons name="people-outline" size={16} color="#555" style={styles.infoIcon} />
-						<Text style={styles.infoText}>
-							{item.guests} Guest{item.guests > 1 && 's'}
-						</Text>
-					</View>
-					<View style={styles.infoRow}>
-						<Ionicons name="time-outline" size={16} color="#555" style={styles.infoIcon} />
-						<Text style={styles.infoText}>{item.time}</Text>
-					</View>
-					<View style={styles.infoRow}>
-						<Ionicons name="calendar-outline" size={16} color="#555" style={styles.infoIcon} />
-						<Text style={styles.infoText}>{item.date}</Text>
-					</View>
-					<View style={styles.infoRow}>
-						<Ionicons name="flash-outline" size={16} color="#555" style={styles.infoIcon} />
-						<Text
-							style={[
-								styles.infoText,
-								item.status === 'Confirmed'
-									? styles.confirmedText
-									: item.status === 'Pending'
-									? styles.pendingText
-									: styles.cancelledText,
-							]}
-						>
-							{item.status}
-						</Text>
-					</View>
-				</View>
-			</View>
-
-			<View style={styles.buttonRow}>
-				<TouchableOpacity style={[styles.button, styles.viewButton]}>
-					<Text style={[styles.buttonText, styles.viewButtonText]}>View</Text>
-				</TouchableOpacity>
-				<TouchableOpacity style={[styles.button, styles.cancelButton]}>
-					<Text style={[styles.buttonText, styles.cancelButtonText]}>Cancel</Text>
-				</TouchableOpacity>
-				<TouchableOpacity style={[styles.button, styles.checkInButton]}>
-					<Text style={[styles.buttonText, styles.checkInButtonText]}>Check In</Text>
-				</TouchableOpacity>
-			</View>
-		</View>
-	);
+	const renderItem = ({item}) => <ReservationCard item={item} />;
 
 	const FilterBar = () => {
 		return (

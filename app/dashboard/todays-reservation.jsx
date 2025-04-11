@@ -1,4 +1,3 @@
-// app/dashboard/todays-reservation.jsx
 import React, {useEffect, useState} from 'react';
 import {View, Text, FlatList, StyleSheet, ActivityIndicator, Alert} from 'react-native';
 import {useRoute} from '@react-navigation/native';
@@ -13,13 +12,15 @@ import {
 	getRejectReservation,
 } from './../../service/api';
 
+// Assume you have a function to fetch reservations for the restaurant:
+import {getGuestReservationInfo} from './../../service/api';
+
 export default function TodaysReservation() {
 	const route = useRoute();
 	const passedData = route.params?.data || [];
 
 	const [reservationsData, setReservationsData] = useState([]);
 	const [isLoading, setIsLoading] = useState(true);
-
 	// Instead of a boolean, use an object: { reservationId, action }
 	const [loadingAction, setLoadingAction] = useState(null);
 
@@ -27,15 +28,32 @@ export default function TodaysReservation() {
 	const storeUserId = useSelector((state) => state.auth?.user?.uuid);
 	const storeRestaurantId = useSelector((state) => state.auth?.user?.res_uuid);
 
+	// Helper to refresh reservations
+	const refreshReservations = async () => {
+		try {
+			setIsLoading(true);
+			const response = await getGuestReservationInfo(storeRestaurantId);
+			// Assuming response.data.data holds the updated list:
+			setReservationsData(response.data.data);
+		} catch (error) {
+			console.error('Error refreshing reservations:', error);
+			Alert.alert('Error', 'Failed to refresh the reservations list.');
+		} finally {
+			setIsLoading(false);
+		}
+	};
+
+	// On initial load, use passed data if available; otherwise fetch.
 	useEffect(() => {
-		const timeout = setTimeout(() => {
+		if (passedData && passedData.length > 0) {
 			setReservationsData(passedData);
 			setIsLoading(false);
-		}, 300);
-		return () => clearTimeout(timeout);
+		} else {
+			refreshReservations();
+		}
 	}, [passedData]);
 
-	// Get current time in HH:mm:ss
+	// Helper to return current time in HH:mm:ss format.
 	const getFormattedTime = () => {
 		const now = new Date();
 		const hours = now.getHours().toString().padStart(2, '0');
@@ -49,7 +67,7 @@ export default function TodaysReservation() {
 			setLoadingAction({reservationId, action: 'accept'});
 			const data = await getAcceptReservation(storeRestaurantId, reservationId, storeUserId);
 			console.log('Accepted:', data);
-			// Optionally, update the UI or refresh list here.
+			await refreshReservations();
 		} catch (error) {
 			console.error('Error accepting reservation:', error);
 			Alert.alert('Error', 'Something went wrong while accepting the reservation.');
@@ -63,6 +81,7 @@ export default function TodaysReservation() {
 			setLoadingAction({reservationId, action: 'reject'});
 			const data = await getRejectReservation(storeRestaurantId, reservationId, storeUserId);
 			console.log('Rejected:', data);
+			await refreshReservations();
 		} catch (error) {
 			console.error('Error rejecting reservation:', error);
 			Alert.alert('Error', 'Something went wrong while rejecting the reservation.');
@@ -76,6 +95,7 @@ export default function TodaysReservation() {
 			setLoadingAction({reservationId, action: 'cancel'});
 			const data = await getCancelReservation(storeRestaurantId, reservationId, storeUserId);
 			console.log('Cancelled:', data);
+			await refreshReservations();
 		} catch (error) {
 			console.error('Error cancelling reservation:', error);
 			Alert.alert('Error', 'Something went wrong while cancelling the reservation.');
@@ -90,6 +110,7 @@ export default function TodaysReservation() {
 			const time = getFormattedTime();
 			const data = await getCheckInReservation(storeRestaurantId, reservationId, time);
 			console.log('Checked In:', data);
+			await refreshReservations();
 		} catch (error) {
 			console.error('Error checking in:', error);
 			Alert.alert('Error', 'Something went wrong while checking in.');
@@ -104,6 +125,7 @@ export default function TodaysReservation() {
 			const time = getFormattedTime();
 			const data = await getCheckOutReservation(storeRestaurantId, reservationId, time);
 			console.log('Checked Out:', data);
+			await refreshReservations();
 		} catch (error) {
 			console.error('Error checking out:', error);
 			Alert.alert('Error', 'Something went wrong while checking out.');
@@ -150,7 +172,7 @@ export default function TodaysReservation() {
 						handleCheckInPress={handleCheckInPress}
 						handleCheckOutPress={handleCheckOutPress}
 						handleViewPress={handleViewPress}
-						loadingAction={loadingAction} // pass the object containing id & action
+						loadingAction={loadingAction} // passing { reservationId, action }
 					/>
 				)}
 				contentContainerStyle={styles.listContainer}

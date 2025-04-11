@@ -15,6 +15,9 @@ import {getGuestReservationInfo} from './../../service/api';
 import PopupModal from '../../components/PopupModal';
 
 export default function TodaysReservation() {
+	const route = useRoute();
+	const passedData = route.params?.data || [];
+
 	const [reservationsData, setReservationsData] = useState([]);
 	const [isLoading, setIsLoading] = useState(true);
 	const [isProcessing, setIsProcessing] = useState(false);
@@ -26,8 +29,6 @@ export default function TodaysReservation() {
 		reservationId: null,
 	});
 
-	const route = useRoute();
-	const passedData = route.params?.data || [];
 	const router = useRouter();
 	const storeUserId = useSelector((state) => state.auth?.user?.uuid);
 	const storeRestaurantId = useSelector((state) => state.auth?.user?.res_uuid);

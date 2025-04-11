@@ -5,13 +5,14 @@ import {Ionicons} from '@expo/vector-icons';
 
 export default function ReservationCard({
 	item,
-	onAccept, // Changed from handleAcceptPress
-	onReject, // Changed from handleRejectPress
-	onCancel, // Changed from handleCancelPress
-	onCheckIn, // Changed from handleCheckInPress
-	onCheckOut, // Changed from handleCheckOutPress
-	onView, // Changed from handleViewPress
+	onAccept,
+	onReject,
+	onCancel,
+	onCheckIn,
+	onCheckOut,
+	onView,
 	loadingAction,
+	showOnlyViewButton = false, // New prop
 }) {
 	// Utility function to check if a button for this item should show loading
 	const isButtonLoading = (action) => {
@@ -63,48 +64,51 @@ export default function ReservationCard({
 					<Text style={[styles.buttonText, styles.viewButtonText]}>View</Text>
 				</TouchableOpacity>
 
-				{item.status === 'pending' && (
+				{!showOnlyViewButton && (
 					<>
-						<TouchableOpacity style={[styles.button, styles.rejectButton]} onPress={() => onReject(item.uuid)}>
-							<View style={styles.contentContainer}>
-								{isButtonLoading('reject') ? <ActivityIndicator color="#FFF" style={styles.loader} /> : null}
-								<Text style={[styles.buttonText, styles.rejectButtonText]}>Reject</Text>
-							</View>
-						</TouchableOpacity>
-						<TouchableOpacity style={[styles.button, styles.acceptButton]} onPress={() => onAccept(item.uuid)}>
-							<View style={styles.contentContainer}>
-								{isButtonLoading('accept') ? <ActivityIndicator color="#FFF" style={styles.loader} /> : null}
-								<Text style={[styles.buttonText, styles.acceptButtonText]}>Accept</Text>
-							</View>
-						</TouchableOpacity>
+						{item.status === 'pending' && (
+							<>
+								<TouchableOpacity style={[styles.button, styles.rejectButton]} onPress={() => onReject(item.uuid)}>
+									<View style={styles.contentContainer}>
+										{isButtonLoading('reject') ? <ActivityIndicator color="#FFF" style={styles.loader} /> : null}
+										<Text style={[styles.buttonText, styles.rejectButtonText]}>Reject</Text>
+									</View>
+								</TouchableOpacity>
+								<TouchableOpacity style={[styles.button, styles.acceptButton]} onPress={() => onAccept(item.uuid)}>
+									<View style={styles.contentContainer}>
+										{isButtonLoading('accept') ? <ActivityIndicator color="#FFF" style={styles.loader} /> : null}
+										<Text style={[styles.buttonText, styles.acceptButtonText]}>Accept</Text>
+									</View>
+								</TouchableOpacity>
+							</>
+						)}
+
+						{item.status === 'confirmed' && (
+							<>
+								<TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => onCancel(item.uuid)}>
+									<View style={styles.contentContainer}>
+										{isButtonLoading('cancel') ? <ActivityIndicator color="#FFF" style={styles.loader} /> : null}
+										<Text style={[styles.buttonText, styles.cancelButtonText]}>Cancel</Text>
+									</View>
+								</TouchableOpacity>
+								<TouchableOpacity style={[styles.button, styles.checkInButton]} onPress={() => onCheckIn(item.uuid)}>
+									<View style={styles.contentContainer}>
+										{isButtonLoading('checkin') ? <ActivityIndicator color="#FFF" style={styles.loader} /> : null}
+										<Text style={[styles.buttonText, styles.checkInButtonText]}>Check In</Text>
+									</View>
+								</TouchableOpacity>
+							</>
+						)}
+
+						{item.status === 'check_in' && (
+							<TouchableOpacity style={[styles.button, styles.checkOutButton]} onPress={() => onCheckOut(item.uuid)}>
+								<View style={styles.contentContainer}>
+									{isButtonLoading('checkout') ? <ActivityIndicator color="#FFF" style={styles.loader} /> : null}
+									<Text style={[styles.buttonText, styles.checkOutButtonText]}>Check Out</Text>
+								</View>
+							</TouchableOpacity>
+						)}
 					</>
-				)}
-
-				{item.status === 'confirmed' && (
-					<>
-						<TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => onCancel(item.uuid)}>
-							<View style={styles.contentContainer}>
-								{isButtonLoading('cancel') ? <ActivityIndicator color="#FFF" style={styles.loader} /> : null}
-								<Text style={[styles.buttonText, styles.cancelButtonText]}>Cancel</Text>
-							</View>
-						</TouchableOpacity>
-
-						<TouchableOpacity style={[styles.button, styles.checkInButton]} onPress={() => onCheckIn(item.uuid)}>
-							<View style={styles.contentContainer}>
-								{isButtonLoading('checkin') ? <ActivityIndicator color="#FFF" style={styles.loader} /> : null}
-								<Text style={[styles.buttonText, styles.checkInButtonText]}>Check In</Text>
-							</View>
-						</TouchableOpacity>
-					</>
-				)}
-
-				{item.status === 'check_in' && (
-					<TouchableOpacity style={[styles.button, styles.checkOutButton]} onPress={() => onCheckOut(item.uuid)}>
-						<View style={styles.contentContainer}>
-							{isButtonLoading('checkout') ? <ActivityIndicator color="#FFF" style={styles.loader} /> : null}
-							<Text style={[styles.buttonText, styles.checkOutButtonText]}>Check Out</Text>
-						</View>
-					</TouchableOpacity>
 				)}
 			</ScrollView>
 		</View>

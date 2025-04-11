@@ -1,14 +1,23 @@
 import React, {useEffect, useState} from 'react';
 import {View, Text, FlatList, StyleSheet, ActivityIndicator} from 'react-native';
 import {useRoute} from '@react-navigation/native';
+import {useRouter} from 'expo-router';
 import ReservationCard from '../../components/ReservationCard';
 
 export default function UpcomingReservation() {
 	const route = useRoute();
+	const router = useRouter();
 	const passedData = route.params?.data || [];
 
 	const [reservationsData, setReservationsData] = useState([]);
 	const [isLoading, setIsLoading] = useState(true);
+
+	const handleViewPress = (item) => {
+		router.push({
+			pathname: '/dashboard/[details]',
+			params: {reservation: JSON.stringify(item)},
+		});
+	};
 
 	useEffect(() => {
 		const timeout = setTimeout(() => {
@@ -34,7 +43,9 @@ export default function UpcomingReservation() {
 				<FlatList
 					data={reservationsData}
 					keyExtractor={(item) => item.uuid || item.id?.toString()}
-					renderItem={({item}) => <ReservationCard item={item} />}
+					renderItem={({item}) => (
+						<ReservationCard item={item} onView={() => handleViewPress(item)} showOnlyViewButton={true} />
+					)}
 					contentContainerStyle={styles.listContainer}
 				/>
 			)}

@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from 'react';
-import {View, Text, ActivityIndicator, ScrollView, StyleSheet} from 'react-native';
-import {useLocalSearchParams} from 'expo-router';
+import {View, Text, ActivityIndicator, ScrollView, StyleSheet, TouchableOpacity} from 'react-native';
+import {useLocalSearchParams, router} from 'expo-router';
+import {Ionicons} from '@expo/vector-icons';
 
 export default function ReservationDetails() {
 	const {reservation: reservationString} = useLocalSearchParams();
@@ -34,6 +35,15 @@ export default function ReservationDetails() {
 	return (
 		<ScrollView contentContainerStyle={styles.container}>
 			<View style={styles.separator} />
+			<View style={styles.close}>
+				<TouchableOpacity
+					onPress={() => {
+						router.back();
+					}}
+				>
+					<Ionicons name="close" size={24} color="#fff" />
+				</TouchableOpacity>
+			</View>
 
 			<Text style={styles.sectionTitle}>Guest Information</Text>
 			<View style={styles.row}>
@@ -117,6 +127,20 @@ const styles = StyleSheet.create({
 		borderRadius: 20,
 		marginBottom: 20,
 		alignSelf: 'center',
+	},
+	close: {
+		backgroundColor: '#333',
+		borderRadius: 20,
+		marginBottom: 20,
+		alignSelf: 'flex-end',
+		shadowColor: '#ccc',
+		shadowOffset: {width: 0, height: 4},
+		shadowOpacity: 0.1,
+		shadowRadius: 10,
+		elevation: 10,
+		position: 'absolute',
+		right: 10,
+		top: 10,
 	},
 	sectionTitle: {
 		fontSize: 16,

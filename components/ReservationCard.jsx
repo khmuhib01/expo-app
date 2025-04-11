@@ -1,4 +1,3 @@
-// components/ReservationCard.jsx
 import React from 'react';
 import {View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator} from 'react-native';
 import {Ionicons} from '@expo/vector-icons';
@@ -12,11 +11,31 @@ export default function ReservationCard({
 	onCheckOut,
 	onView,
 	loadingAction,
-	showOnlyViewButton = false, // New prop
+	showOnlyViewButton = false,
 }) {
-	// Utility function to check if a button for this item should show loading
 	const isButtonLoading = (action) => {
 		return loadingAction && loadingAction.reservationId === item.uuid && loadingAction.action === action;
+	};
+
+	const getStatusStyle = () => {
+		switch (item.status.toLowerCase()) {
+			case 'confirmed':
+				return styles.confirmedText;
+			case 'pending':
+				return styles.pendingText;
+			case 'cancelled':
+				return styles.cancelledText;
+			case 'check_in':
+				return styles.checkInText;
+			case 'check_out':
+				return styles.checkOutText;
+			case 'completed':
+				return styles.completedText;
+			case 'rejected':
+				return styles.rejectedText;
+			default:
+				return styles.defaultText;
+		}
 	};
 
 	return (
@@ -24,7 +43,7 @@ export default function ReservationCard({
 			<View style={styles.topRow}>
 				<View style={styles.tableBadge}>
 					<Text style={styles.badgeLabel}>TABLE</Text>
-					<Text style={styles.badgeValue}>{item.table_master.table_name}</Text>
+					<Text style={styles.badgeValue}>{item.table_master?.table_name || 'N/A'}</Text>
 				</View>
 				<View style={styles.infoContainer}>
 					<View style={styles.infoRow}>
@@ -43,18 +62,7 @@ export default function ReservationCard({
 					</View>
 					<View style={styles.infoRow}>
 						<Ionicons name="flash-outline" size={16} color="#555" style={styles.infoIcon} />
-						<Text
-							style={[
-								styles.infoText,
-								item.status === 'Confirmed'
-									? styles.confirmedText
-									: item.status === 'Pending'
-									? styles.pendingText
-									: styles.cancelledText,
-							]}
-						>
-							{item.status}
-						</Text>
+						<Text style={[styles.statusText, getStatusStyle()]}>{item.status.toUpperCase()}</Text>
 					</View>
 				</View>
 			</View>
@@ -66,44 +74,44 @@ export default function ReservationCard({
 
 				{!showOnlyViewButton && (
 					<>
-						{item.status === 'pending' && (
+						{item.status.toLowerCase() === 'pending' && (
 							<>
 								<TouchableOpacity style={[styles.button, styles.rejectButton]} onPress={() => onReject(item.uuid)}>
 									<View style={styles.contentContainer}>
-										{isButtonLoading('reject') ? <ActivityIndicator color="#FFF" style={styles.loader} /> : null}
+										{isButtonLoading('reject') ? <ActivityIndicator color="#991B1B" style={styles.loader} /> : null}
 										<Text style={[styles.buttonText, styles.rejectButtonText]}>Reject</Text>
 									</View>
 								</TouchableOpacity>
 								<TouchableOpacity style={[styles.button, styles.acceptButton]} onPress={() => onAccept(item.uuid)}>
 									<View style={styles.contentContainer}>
-										{isButtonLoading('accept') ? <ActivityIndicator color="#FFF" style={styles.loader} /> : null}
+										{isButtonLoading('accept') ? <ActivityIndicator color="#065F46" style={styles.loader} /> : null}
 										<Text style={[styles.buttonText, styles.acceptButtonText]}>Accept</Text>
 									</View>
 								</TouchableOpacity>
 							</>
 						)}
 
-						{item.status === 'confirmed' && (
+						{item.status.toLowerCase() === 'confirmed' && (
 							<>
 								<TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => onCancel(item.uuid)}>
 									<View style={styles.contentContainer}>
-										{isButtonLoading('cancel') ? <ActivityIndicator color="#FFF" style={styles.loader} /> : null}
+										{isButtonLoading('cancel') ? <ActivityIndicator color="#92400E" style={styles.loader} /> : null}
 										<Text style={[styles.buttonText, styles.cancelButtonText]}>Cancel</Text>
 									</View>
 								</TouchableOpacity>
 								<TouchableOpacity style={[styles.button, styles.checkInButton]} onPress={() => onCheckIn(item.uuid)}>
 									<View style={styles.contentContainer}>
-										{isButtonLoading('checkin') ? <ActivityIndicator color="#FFF" style={styles.loader} /> : null}
+										{isButtonLoading('checkin') ? <ActivityIndicator color="#1D4ED8" style={styles.loader} /> : null}
 										<Text style={[styles.buttonText, styles.checkInButtonText]}>Check In</Text>
 									</View>
 								</TouchableOpacity>
 							</>
 						)}
 
-						{item.status === 'check_in' && (
+						{item.status.toLowerCase() === 'check_in' && (
 							<TouchableOpacity style={[styles.button, styles.checkOutButton]} onPress={() => onCheckOut(item.uuid)}>
 								<View style={styles.contentContainer}>
-									{isButtonLoading('checkout') ? <ActivityIndicator color="#FFF" style={styles.loader} /> : null}
+									{isButtonLoading('checkout') ? <ActivityIndicator color="#B45309" style={styles.loader} /> : null}
 									<Text style={[styles.buttonText, styles.checkOutButtonText]}>Check Out</Text>
 								</View>
 							</TouchableOpacity>
@@ -171,17 +179,46 @@ const styles = StyleSheet.create({
 		fontSize: 14,
 		color: '#333',
 	},
+	statusText: {
+		fontWeight: '600',
+		textTransform: 'uppercase',
+		fontSize: 12,
+		letterSpacing: 0.5,
+		paddingHorizontal: 6,
+		paddingVertical: 2,
+		borderRadius: 4,
+	},
 	confirmedText: {
 		color: '#28a745',
-		fontWeight: '600',
+		backgroundColor: '#D1FAE5',
 	},
 	pendingText: {
 		color: '#FFA500',
-		fontWeight: '600',
+		backgroundColor: '#FEF3C7',
 	},
 	cancelledText: {
 		color: '#dc3545',
-		fontWeight: '600',
+		backgroundColor: '#FEE2E2',
+	},
+	checkInText: {
+		color: '#1D4ED8',
+		backgroundColor: '#DBEAFE',
+	},
+	checkOutText: {
+		color: '#B45309',
+		backgroundColor: '#FDE68A',
+	},
+	completedText: {
+		color: '#065F46',
+		backgroundColor: '#D1FAE5',
+	},
+	rejectedText: {
+		color: '#92400E',
+		backgroundColor: '#FEE2E2',
+	},
+	defaultText: {
+		color: '#333',
+		backgroundColor: '#f0f0f0',
 	},
 	buttonRow: {
 		paddingTop: 8,
@@ -237,8 +274,9 @@ const styles = StyleSheet.create({
 		borderColor: '#D97706',
 		backgroundColor: '#FDE68A',
 	},
-	checkOutButtonText: {
+	checkOutText: {
 		color: '#B45309',
+		backgroundColor: '#FDE68A',
 	},
 	loader: {
 		marginRight: 4,

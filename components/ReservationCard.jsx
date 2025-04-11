@@ -2,8 +2,12 @@
 import React from 'react';
 import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import {Ionicons} from '@expo/vector-icons';
+import {useNavigation} from '@react-navigation/native';
+import {useRouter} from 'expo-router';
 
 export default function ReservationCard({item}) {
+	const navigation = useNavigation();
+	const router = useRouter();
 	return (
 		<View style={styles.card}>
 			<View style={styles.topRow}>
@@ -45,7 +49,15 @@ export default function ReservationCard({item}) {
 			</View>
 
 			<View style={styles.buttonRow}>
-				<TouchableOpacity style={[styles.button, styles.viewButton]}>
+				<TouchableOpacity
+					style={[styles.button, styles.viewButton]}
+					onPress={() =>
+						router.push({
+							pathname: '/dashboard/[details]',
+							params: {reservation: JSON.stringify(item)}, // 🔑 stringify
+						})
+					}
+				>
 					<Text style={[styles.buttonText, styles.viewButtonText]}>View</Text>
 				</TouchableOpacity>
 				<TouchableOpacity style={[styles.button, styles.cancelButton]}>

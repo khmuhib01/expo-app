@@ -17,6 +17,9 @@ export default function HeaderMenu({iconColor = '#fff'}) {
 		if (option === 'Option 1') {
 			// Add logout logic here
 			navigator.navigate('auth/login');
+		} else if (option === 'Option 2') {
+			// Add logout logic here
+			navigator.navigate('test');
 		}
 		setMenuVisible(false);
 	};

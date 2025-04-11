@@ -32,6 +32,16 @@ function MainLayoutInner() {
 				options={{headerShown: true, title: 'Upcoming Reservations'}}
 			/>
 			<Stack.Screen name="auth/login" options={{headerShown: false, title: 'Login'}} />
+			<Stack.Screen
+				name="dashboard/[details]"
+				options={{
+					presentation: 'formSheet',
+					gestureDirection: 'vertical',
+					animation: 'slide_from_bottom',
+					sheetInitialDetentIndex: 0,
+					sheetAllowedDetents: [0.5, 1.0],
+				}}
+			/>
 		</Stack>
 	);
 }

@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {View, Text, FlatList, StyleSheet, ActivityIndicator, Alert} from 'react-native';
+import {View, Text, FlatList, StyleSheet, ActivityIndicator} from 'react-native';
 import {useRoute} from '@react-navigation/native';
 import {useRouter} from 'expo-router';
 import {useSelector} from 'react-redux';
@@ -11,39 +11,39 @@ import {
 	getCheckOutReservation,
 	getRejectReservation,
 } from './../../service/api';
-
-// Assume you have a function to fetch reservations for the restaurant:
 import {getGuestReservationInfo} from './../../service/api';
+import PopupModal from '../../components/PopupModal';
 
 export default function TodaysReservation() {
-	const route = useRoute();
-	const passedData = route.params?.data || [];
-
 	const [reservationsData, setReservationsData] = useState([]);
 	const [isLoading, setIsLoading] = useState(true);
-	// Instead of a boolean, use an object: { reservationId, action }
-	const [loadingAction, setLoadingAction] = useState(null);
+	const [isProcessing, setIsProcessing] = useState(false);
+	const [modalConfig, setModalConfig] = useState({
+		visible: false,
+		title: '',
+		message: '',
+		action: null,
+		reservationId: null,
+	});
 
+	const route = useRoute();
+	const passedData = route.params?.data || [];
 	const router = useRouter();
 	const storeUserId = useSelector((state) => state.auth?.user?.uuid);
 	const storeRestaurantId = useSelector((state) => state.auth?.user?.res_uuid);
 
-	// Helper to refresh reservations
 	const refreshReservations = async () => {
 		try {
 			setIsLoading(true);
 			const response = await getGuestReservationInfo(storeRestaurantId);
-			// Assuming response.data.data holds the updated list:
 			setReservationsData(response.data.data);
 		} catch (error) {
 			console.error('Error refreshing reservations:', error);
-			Alert.alert('Error', 'Failed to refresh the reservations list.');
 		} finally {
 			setIsLoading(false);
 		}
 	};
 
-	// On initial load, use passed data if available; otherwise fetch.
 	useEffect(() => {
 		if (passedData && passedData.length > 0) {
 			setReservationsData(passedData);
@@ -53,84 +53,81 @@ export default function TodaysReservation() {
 		}
 	}, [passedData]);
 
-	// Helper to return current time in HH:mm:ss format.
 	const getFormattedTime = () => {
 		const now = new Date();
-		const hours = now.getHours().toString().padStart(2, '0');
-		const minutes = now.getMinutes().toString().padStart(2, '0');
-		const seconds = now.getSeconds().toString().padStart(2, '0');
-		return `${hours}:${minutes}:${seconds}`;
+		return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now
+			.getSeconds()
+			.toString()
+			.padStart(2, '0')}`;
 	};
 
-	const handleAcceptPress = async (reservationId) => {
-		try {
-			setLoadingAction({reservationId, action: 'accept'});
-			const data = await getAcceptReservation(storeRestaurantId, reservationId, storeUserId);
-			console.log('Accepted:', data);
-			await refreshReservations();
-		} catch (error) {
-			console.error('Error accepting reservation:', error);
-			Alert.alert('Error', 'Something went wrong while accepting the reservation.');
-		} finally {
-			setLoadingAction(null);
-		}
+	const showConfirmationModal = (action, reservationId) => {
+		const messages = {
+			accept: {
+				title: 'Confirm Acceptance',
+				message: 'Are you sure you want to accept this reservation?',
+			},
+			reject: {
+				title: 'Confirm Rejection',
+				message: 'Are you sure you want to reject this reservation?',
+			},
+			cancel: {
+				title: 'Confirm Cancellation',
+				message: 'Are you sure you want to cancel this reservation?',
+			},
+			checkin: {
+				title: 'Confirm Check-In',
+				message: 'Are you sure you want to check in this guest?',
+			},
+			checkout: {
+				title: 'Confirm Check-Out',
+				message: 'Are you sure you want to check out this guest?',
+			},
+		};
+
+		setModalConfig({
+			visible: true,
+			...messages[action],
+			action,
+			reservationId,
+		});
 	};
 
-	const handleRejectPress = async (reservationId) => {
+	const handleConfirmAction = async () => {
 		try {
-			setLoadingAction({reservationId, action: 'reject'});
-			const data = await getRejectReservation(storeRestaurantId, reservationId, storeUserId);
-			console.log('Rejected:', data);
-			await refreshReservations();
-		} catch (error) {
-			console.error('Error rejecting reservation:', error);
-			Alert.alert('Error', 'Something went wrong while rejecting the reservation.');
-		} finally {
-			setLoadingAction(null);
-		}
-	};
+			setIsProcessing(true);
+			const {action, reservationId} = modalConfig;
+			let data;
 
-	const handleCancelPress = async (reservationId) => {
-		try {
-			setLoadingAction({reservationId, action: 'cancel'});
-			const data = await getCancelReservation(storeRestaurantId, reservationId, storeUserId);
-			console.log('Cancelled:', data);
-			await refreshReservations();
-		} catch (error) {
-			console.error('Error cancelling reservation:', error);
-			Alert.alert('Error', 'Something went wrong while cancelling the reservation.');
-		} finally {
-			setLoadingAction(null);
-		}
-	};
+			switch (action) {
+				case 'accept':
+					data = await getAcceptReservation(storeRestaurantId, reservationId, storeUserId);
+					break;
+				case 'reject':
+					data = await getRejectReservation(storeRestaurantId, reservationId, storeUserId);
+					break;
+				case 'cancel':
+					data = await getCancelReservation(storeRestaurantId, reservationId, storeUserId);
+					break;
+				case 'checkin':
+					const checkInTime = getFormattedTime();
+					data = await getCheckInReservation(storeRestaurantId, reservationId, checkInTime);
+					break;
+				case 'checkout':
+					const checkOutTime = getFormattedTime();
+					data = await getCheckOutReservation(storeRestaurantId, reservationId, checkOutTime);
+					break;
+				default:
+					break;
+			}
 
-	const handleCheckInPress = async (reservationId) => {
-		try {
-			setLoadingAction({reservationId, action: 'checkin'});
-			const time = getFormattedTime();
-			const data = await getCheckInReservation(storeRestaurantId, reservationId, time);
-			console.log('Checked In:', data);
+			console.log(`${action} successful:`, data);
 			await refreshReservations();
 		} catch (error) {
-			console.error('Error checking in:', error);
-			Alert.alert('Error', 'Something went wrong while checking in.');
+			console.error(`Error in ${modalConfig.action}:`, error);
 		} finally {
-			setLoadingAction(null);
-		}
-	};
-
-	const handleCheckOutPress = async (reservationId) => {
-		try {
-			setLoadingAction({reservationId, action: 'checkout'});
-			const time = getFormattedTime();
-			const data = await getCheckOutReservation(storeRestaurantId, reservationId, time);
-			console.log('Checked Out:', data);
-			await refreshReservations();
-		} catch (error) {
-			console.error('Error checking out:', error);
-			Alert.alert('Error', 'Something went wrong while checking out.');
-		} finally {
-			setLoadingAction(null);
+			setIsProcessing(false);
+			setModalConfig({...modalConfig, visible: false});
 		}
 	};
 
@@ -159,25 +156,49 @@ export default function TodaysReservation() {
 	}
 
 	return (
-		<View style={styles.container}>
-			<FlatList
-				data={reservationsData}
-				keyExtractor={(item) => item.uuid || item.id?.toString()}
-				renderItem={({item}) => (
-					<ReservationCard
-						item={item}
-						handleAcceptPress={handleAcceptPress}
-						handleRejectPress={handleRejectPress}
-						handleCancelPress={handleCancelPress}
-						handleCheckInPress={handleCheckInPress}
-						handleCheckOutPress={handleCheckOutPress}
-						handleViewPress={handleViewPress}
-						loadingAction={loadingAction} // passing { reservationId, action }
-					/>
-				)}
-				contentContainerStyle={styles.listContainer}
+		<>
+			<View style={styles.container}>
+				<FlatList
+					data={reservationsData}
+					keyExtractor={(item) => item.uuid || item.id?.toString()}
+					renderItem={({item}) => (
+						<ReservationCard
+							item={item}
+							onAccept={() => showConfirmationModal('accept', item.uuid)}
+							onReject={() => showConfirmationModal('reject', item.uuid)}
+							onCancel={() => showConfirmationModal('cancel', item.uuid)}
+							onCheckIn={() => showConfirmationModal('checkin', item.uuid)}
+							onCheckOut={() => showConfirmationModal('checkout', item.uuid)}
+							onView={() => handleViewPress(item)}
+						/>
+					)}
+					contentContainerStyle={styles.listContainer}
+				/>
+			</View>
+
+			<PopupModal
+				isVisible={modalConfig.visible}
+				onClose={() => !isProcessing && setModalConfig({...modalConfig, visible: false})}
+				title={modalConfig.title}
+				message={modalConfig.message}
+				isLoading={isProcessing}
+				loadingButtonIndex={1}
+				buttons={[
+					{
+						text: 'Cancel',
+						onPress: () => setModalConfig({...modalConfig, visible: false}),
+						style: {backgroundColor: '#f44336'},
+						textStyle: {fontSize: 16},
+					},
+					{
+						text: 'Confirm',
+						onPress: handleConfirmAction,
+						style: {backgroundColor: '#4CAF50'},
+						textStyle: {fontSize: 16},
+					},
+				]}
 			/>
-		</View>
+		</>
 	);
 }
 

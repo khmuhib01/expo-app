@@ -11,8 +11,13 @@ export default function ReservationCard({
 	handleCheckInPress,
 	handleCheckOutPress,
 	handleRejectPress,
-	isLoading,
+	loadingAction,
 }) {
+	// Utility function to check if a button for this item should show loading
+	const isButtonLoading = (action) => {
+		return loadingAction && loadingAction.reservationId === item.uuid && loadingAction.action === action;
+	};
+
 	return (
 		<View style={styles.card}>
 			<View style={styles.topRow}>
@@ -60,25 +65,15 @@ export default function ReservationCard({
 
 				{item.status === 'pending' && (
 					<>
-						<TouchableOpacity
-							style={[styles.button, styles.rejectButton]}
-							onPress={() => {
-								handleRejectPress(item.uuid);
-							}}
-						>
+						<TouchableOpacity style={[styles.button, styles.rejectButton]} onPress={() => handleRejectPress(item.uuid)}>
 							<View style={styles.contentContainer}>
-								{isLoading && <ActivityIndicator color="#FFF" style={styles.loader} />}
+								{isButtonLoading('reject') ? <ActivityIndicator color="#FFF" style={styles.loader} /> : null}
 								<Text style={[styles.buttonText, styles.rejectButtonText]}>Reject</Text>
 							</View>
 						</TouchableOpacity>
-						<TouchableOpacity
-							style={[styles.button, styles.acceptButton]}
-							onPress={() => {
-								handleAcceptPress(item.uuid);
-							}}
-						>
+						<TouchableOpacity style={[styles.button, styles.acceptButton]} onPress={() => handleAcceptPress(item.uuid)}>
 							<View style={styles.contentContainer}>
-								{isLoading && <ActivityIndicator color="#FFF" style={styles.loader} />}
+								{isButtonLoading('accept') ? <ActivityIndicator color="#FFF" style={styles.loader} /> : null}
 								<Text style={[styles.buttonText, styles.acceptButtonText]}>Accept</Text>
 							</View>
 						</TouchableOpacity>
@@ -89,7 +84,7 @@ export default function ReservationCard({
 					<>
 						<TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => handleCancelPress(item.uuid)}>
 							<View style={styles.contentContainer}>
-								{isLoading && <ActivityIndicator color="#FFF" style={styles.loader} />}
+								{isButtonLoading('cancel') ? <ActivityIndicator color="#FFF" style={styles.loader} /> : null}
 								<Text style={[styles.buttonText, styles.cancelButtonText]}>Cancel</Text>
 							</View>
 						</TouchableOpacity>
@@ -99,7 +94,7 @@ export default function ReservationCard({
 							onPress={() => handleCheckInPress(item.uuid)}
 						>
 							<View style={styles.contentContainer}>
-								{isLoading && <ActivityIndicator color="#FFF" style={styles.loader} />}
+								{isButtonLoading('checkin') ? <ActivityIndicator color="#FFF" style={styles.loader} /> : null}
 								<Text style={[styles.buttonText, styles.checkInButtonText]}>Checked In</Text>
 							</View>
 						</TouchableOpacity>
@@ -112,7 +107,7 @@ export default function ReservationCard({
 						onPress={() => handleCheckOutPress(item.uuid)}
 					>
 						<View style={styles.contentContainer}>
-							{isLoading && <ActivityIndicator color="#FFF" style={styles.loader} />}
+							{isButtonLoading('checkout') ? <ActivityIndicator color="#FFF" style={styles.loader} /> : null}
 							<Text style={[styles.buttonText, styles.checkOutButtonText]}>Checked Out</Text>
 						</View>
 					</TouchableOpacity>
@@ -201,12 +196,10 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 12,
 		marginRight: 8,
 	},
-
 	buttonText: {
 		fontWeight: '600',
 		fontSize: 14,
 	},
-
 	viewButton: {
 		borderColor: '#28a745',
 		backgroundColor: '#E6F4EA',
@@ -214,7 +207,6 @@ const styles = StyleSheet.create({
 	viewButtonText: {
 		color: '#1A7F3B',
 	},
-
 	acceptButton: {
 		borderColor: '#28a745',
 		backgroundColor: '#D1FAE5',
@@ -222,7 +214,6 @@ const styles = StyleSheet.create({
 	acceptButtonText: {
 		color: '#065F46',
 	},
-
 	rejectButton: {
 		borderColor: '#dc3545',
 		backgroundColor: '#FEE2E2',
@@ -230,7 +221,6 @@ const styles = StyleSheet.create({
 	rejectButtonText: {
 		color: '#991B1B',
 	},
-
 	cancelButton: {
 		borderColor: '#dc3545',
 		backgroundColor: '#FEF3C7',
@@ -238,7 +228,6 @@ const styles = StyleSheet.create({
 	cancelButtonText: {
 		color: '#92400E',
 	},
-
 	checkInButton: {
 		borderColor: '#0d6efd',
 		backgroundColor: '#DBEAFE',
@@ -246,12 +235,14 @@ const styles = StyleSheet.create({
 	checkInButtonText: {
 		color: '#1D4ED8',
 	},
-
 	checkOutButton: {
 		borderColor: '#D97706',
 		backgroundColor: '#FDE68A',
 	},
 	checkOutButtonText: {
 		color: '#B45309',
+	},
+	loader: {
+		marginRight: 4,
 	},
 });

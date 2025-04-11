@@ -14,23 +14,19 @@ import {
 } from './../../service/api';
 
 export default function TodaysReservation() {
-	// Get passed data from route params
 	const route = useRoute();
 	const passedData = route.params?.data || [];
 
-	// Local state
 	const [reservationsData, setReservationsData] = useState([]);
 	const [isLoading, setIsLoading] = useState(true);
-	// If you need to show a loader during any button press, you can manage it separately.
-	const [isHandlePressLoading, setIsHandlePressLoading] = useState(false);
 
-	// Get necessary IDs from Redux store
+	// Instead of a boolean, use an object: { reservationId, action }
+	const [loadingAction, setLoadingAction] = useState(null);
+
+	const router = useRouter();
 	const storeUserId = useSelector((state) => state.auth?.user?.uuid);
 	const storeRestaurantId = useSelector((state) => state.auth?.user?.res_uuid);
 
-	const router = useRouter();
-
-	// Simulate a slight delay and set passed data to local state
 	useEffect(() => {
 		const timeout = setTimeout(() => {
 			setReservationsData(passedData);
@@ -39,7 +35,7 @@ export default function TodaysReservation() {
 		return () => clearTimeout(timeout);
 	}, [passedData]);
 
-	// Helper function to get current time in HH:mm:ss format
+	// Get current time in HH:mm:ss
 	const getFormattedTime = () => {
 		const now = new Date();
 		const hours = now.getHours().toString().padStart(2, '0');
@@ -48,50 +44,49 @@ export default function TodaysReservation() {
 		return `${hours}:${minutes}:${seconds}`;
 	};
 
-	// Handler functions
 	const handleAcceptPress = async (reservationId) => {
 		try {
-			setIsHandlePressLoading(true);
+			setLoadingAction({reservationId, action: 'accept'});
 			const data = await getAcceptReservation(storeRestaurantId, reservationId, storeUserId);
 			console.log('Accepted:', data);
-			// Optionally update UI state to reflect new status
+			// Optionally, update the UI or refresh list here.
 		} catch (error) {
 			console.error('Error accepting reservation:', error);
 			Alert.alert('Error', 'Something went wrong while accepting the reservation.');
 		} finally {
-			setIsHandlePressLoading(false);
+			setLoadingAction(null);
 		}
 	};
 
 	const handleRejectPress = async (reservationId) => {
 		try {
-			setIsHandlePressLoading(true);
+			setLoadingAction({reservationId, action: 'reject'});
 			const data = await getRejectReservation(storeRestaurantId, reservationId, storeUserId);
 			console.log('Rejected:', data);
 		} catch (error) {
 			console.error('Error rejecting reservation:', error);
 			Alert.alert('Error', 'Something went wrong while rejecting the reservation.');
 		} finally {
-			setIsHandlePressLoading(false);
+			setLoadingAction(null);
 		}
 	};
 
 	const handleCancelPress = async (reservationId) => {
 		try {
-			setIsHandlePressLoading(true);
+			setLoadingAction({reservationId, action: 'cancel'});
 			const data = await getCancelReservation(storeRestaurantId, reservationId, storeUserId);
 			console.log('Cancelled:', data);
 		} catch (error) {
 			console.error('Error cancelling reservation:', error);
 			Alert.alert('Error', 'Something went wrong while cancelling the reservation.');
 		} finally {
-			setIsHandlePressLoading(false);
+			setLoadingAction(null);
 		}
 	};
 
 	const handleCheckInPress = async (reservationId) => {
 		try {
-			setIsHandlePressLoading(true);
+			setLoadingAction({reservationId, action: 'checkin'});
 			const time = getFormattedTime();
 			const data = await getCheckInReservation(storeRestaurantId, reservationId, time);
 			console.log('Checked In:', data);
@@ -99,13 +94,13 @@ export default function TodaysReservation() {
 			console.error('Error checking in:', error);
 			Alert.alert('Error', 'Something went wrong while checking in.');
 		} finally {
-			setIsHandlePressLoading(false);
+			setLoadingAction(null);
 		}
 	};
 
 	const handleCheckOutPress = async (reservationId) => {
 		try {
-			setIsHandlePressLoading(true);
+			setLoadingAction({reservationId, action: 'checkout'});
 			const time = getFormattedTime();
 			const data = await getCheckOutReservation(storeRestaurantId, reservationId, time);
 			console.log('Checked Out:', data);
@@ -113,7 +108,7 @@ export default function TodaysReservation() {
 			console.error('Error checking out:', error);
 			Alert.alert('Error', 'Something went wrong while checking out.');
 		} finally {
-			setIsHandlePressLoading(false);
+			setLoadingAction(null);
 		}
 	};
 
@@ -124,7 +119,6 @@ export default function TodaysReservation() {
 		});
 	};
 
-	// Render
 	if (isLoading) {
 		return (
 			<View style={styles.loadingContainer}>
@@ -156,7 +150,7 @@ export default function TodaysReservation() {
 						handleCheckInPress={handleCheckInPress}
 						handleCheckOutPress={handleCheckOutPress}
 						handleViewPress={handleViewPress}
-						isLoading={isHandlePressLoading}
+						loadingAction={loadingAction} // pass the object containing id & action
 					/>
 				)}
 				contentContainerStyle={styles.listContainer}
@@ -166,31 +160,10 @@ export default function TodaysReservation() {
 }
 
 const styles = StyleSheet.create({
-	container: {
-		flex: 1,
-		backgroundColor: '#F3F3F3',
-	},
-	listContainer: {
-		paddingTop: 16,
-		paddingHorizontal: 16,
-		paddingBottom: 16,
-	},
-	loadingContainer: {
-		flex: 1,
-		justifyContent: 'center',
-		alignItems: 'center',
-	},
-	loadingText: {
-		marginTop: 10,
-		color: '#666',
-	},
-	emptyContainer: {
-		flex: 1,
-		justifyContent: 'center',
-		alignItems: 'center',
-	},
-	emptyText: {
-		color: '#888',
-		fontSize: 16,
-	},
+	container: {flex: 1, backgroundColor: '#F3F3F3'},
+	listContainer: {paddingTop: 16, paddingHorizontal: 16, paddingBottom: 16},
+	loadingContainer: {flex: 1, justifyContent: 'center', alignItems: 'center'},
+	loadingText: {marginTop: 10, color: '#666'},
+	emptyContainer: {flex: 1, justifyContent: 'center', alignItems: 'center'},
+	emptyText: {color: '#888', fontSize: 16},
 });

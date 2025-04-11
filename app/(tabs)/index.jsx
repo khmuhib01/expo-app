@@ -72,6 +72,7 @@ export default function Home() {
 
 	const refreshReservations = useCallback(async () => {
 		try {
+			setIsListLoading(true);
 			const response = await getGuestReservationInfo(storeRestaurantId);
 			const reservations = response?.data?.data || [];
 			setAllReservations(reservations);
@@ -79,6 +80,8 @@ export default function Home() {
 			setFilteredReservations(filtered);
 		} catch (error) {
 			console.error('Error refreshing reservations:', error);
+		} finally {
+			setIsListLoading(false);
 		}
 	}, [storeRestaurantId, activeFilter, filterReservations]);
 
@@ -203,23 +206,66 @@ export default function Home() {
 
 	const handleViewPress = (item) => {
 		router.push({
-			pathname: '/dashboard/[details]',
+			pathname: '/reservation/[details]',
 			params: {reservation: JSON.stringify(item)},
 		});
 	};
 
-	if (isInitialLoading) {
+	const renderContent = () => {
+		if (isInitialLoading) {
+			return (
+				<View style={styles.loadingContainer}>
+					<ActivityIndicator size="large" color="#333" />
+					<Text style={styles.loadingText}>Loading reservations...</Text>
+				</View>
+			);
+		}
+
+		if (isListLoading) {
+			return (
+				<View style={styles.listLoadingContainer}>
+					<ActivityIndicator size="small" color="#333" />
+				</View>
+			);
+		}
+
+		if (filteredReservations.length === 0) {
+			return (
+				<View style={styles.emptyContainer}>
+					<Text style={styles.emptyText}>
+						{activeFilter === 'today' ? 'No reservations for today' : 'No upcoming reservations'}
+					</Text>
+				</View>
+			);
+		}
+
 		return (
-			<View style={styles.loadingContainer}>
-				<ActivityIndicator size="large" color="#333" />
-				<Text style={styles.loadingText}>Loading reservations...</Text>
-			</View>
+			<FlatList
+				data={filteredReservations}
+				keyExtractor={(item) => item.uuid || item.id?.toString()}
+				renderItem={({item}) => (
+					<ReservationCard
+						item={item}
+						onAccept={() => showConfirmationModal('accept', item.uuid)}
+						onReject={() => showConfirmationModal('reject', item.uuid)}
+						onCancel={() => showConfirmationModal('cancel', item.uuid)}
+						onCheckIn={() => showConfirmationModal('checkin', item.uuid)}
+						onCheckOut={() => showConfirmationModal('checkout', item.uuid)}
+						onView={() => handleViewPress(item)}
+						showOnlyViewButton={activeFilter === 'upcoming'}
+					/>
+				)}
+				contentContainerStyle={styles.listContainer}
+				refreshing={isListLoading}
+				onRefresh={refreshReservations}
+			/>
 		);
-	}
+	};
 
 	return (
 		<>
 			<View style={styles.container}>
+				{/* Filter tabs - always visible */}
 				<View style={styles.filterContainer}>
 					<TouchableOpacity
 						style={[styles.filterButton, activeFilter === 'today' && styles.activeFilter]}
@@ -240,36 +286,8 @@ export default function Home() {
 					</TouchableOpacity>
 				</View>
 
-				{isListLoading ? (
-					<View style={styles.listLoadingContainer}>
-						<ActivityIndicator size="small" color="#333" />
-					</View>
-				) : filteredReservations.length === 0 ? (
-					<View style={styles.emptyContainer}>
-						<Text style={styles.emptyText}>
-							{activeFilter === 'today' ? 'No reservations for today' : 'No upcoming reservations'}
-						</Text>
-					</View>
-				) : (
-					<FlatList
-						data={filteredReservations}
-						keyExtractor={(item) => item.uuid || item.id?.toString()}
-						renderItem={({item}) => (
-							<ReservationCard
-								item={item}
-								onAccept={() => showConfirmationModal('accept', item.uuid)}
-								onReject={() => showConfirmationModal('reject', item.uuid)}
-								onCancel={() => showConfirmationModal('cancel', item.uuid)}
-								onCheckIn={() => showConfirmationModal('checkin', item.uuid)}
-								onCheckOut={() => showConfirmationModal('checkout', item.uuid)}
-								onView={() => handleViewPress(item)}
-							/>
-						)}
-						contentContainerStyle={styles.listContainer}
-						refreshing={isListLoading}
-						onRefresh={refreshReservations}
-					/>
-				)}
+				{/* Content area - changes based on state */}
+				<View style={styles.contentContainer}>{renderContent()}</View>
 			</View>
 
 			<PopupModal
@@ -299,7 +317,13 @@ export default function Home() {
 }
 
 const styles = StyleSheet.create({
-	container: {flex: 1, backgroundColor: '#F3F3F3'},
+	container: {
+		flex: 1,
+		backgroundColor: '#F3F3F3',
+	},
+	contentContainer: {
+		flex: 1,
+	},
 	filterContainer: {
 		flexDirection: 'row',
 		justifyContent: 'space-around',
@@ -314,7 +338,7 @@ const styles = StyleSheet.create({
 		borderRadius: 20,
 	},
 	activeFilter: {
-		backgroundColor: '#4CAF50',
+		backgroundColor: '#EF4444',
 	},
 	filterText: {
 		fontSize: 16,
@@ -325,15 +349,33 @@ const styles = StyleSheet.create({
 		color: '#fff',
 		fontWeight: '600',
 	},
-	listContainer: {paddingTop: 8, paddingHorizontal: 16, paddingBottom: 16},
-	loadingContainer: {flex: 1, justifyContent: 'center', alignItems: 'center'},
-	listLoadingContainer: {paddingVertical: 20, justifyContent: 'center', alignItems: 'center'},
-	loadingText: {marginTop: 10, color: '#666'},
+	listContainer: {
+		paddingTop: 8,
+		paddingHorizontal: 16,
+		paddingBottom: 16,
+	},
+	loadingContainer: {
+		flex: 1,
+		justifyContent: 'center',
+		alignItems: 'center',
+	},
+	listLoadingContainer: {
+		flex: 1,
+		justifyContent: 'center',
+		alignItems: 'center',
+		paddingVertical: 20,
+	},
+	loadingText: {
+		marginTop: 10,
+		color: '#666',
+	},
 	emptyContainer: {
 		flex: 1,
 		justifyContent: 'center',
 		alignItems: 'center',
-		paddingTop: 20,
 	},
-	emptyText: {color: '#888', fontSize: 16},
+	emptyText: {
+		color: '#888',
+		fontSize: 16,
+	},
 });

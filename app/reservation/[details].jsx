@@ -35,15 +35,6 @@ export default function ReservationDetails() {
 	return (
 		<ScrollView contentContainerStyle={styles.container}>
 			<View style={styles.separator} />
-			<View style={styles.close}>
-				<TouchableOpacity
-					onPress={() => {
-						router.back();
-					}}
-				>
-					<Ionicons name="close" size={24} color="#fff" />
-				</TouchableOpacity>
-			</View>
 
 			<Text style={styles.sectionTitle}>Guest Information</Text>
 			<View style={styles.row}>
@@ -121,26 +112,14 @@ const styles = StyleSheet.create({
 		height: '100%',
 	},
 	separator: {
-		width: 30,
+		width: 50,
 		height: 2,
 		backgroundColor: 'gray',
 		borderRadius: 20,
 		marginBottom: 20,
 		alignSelf: 'center',
-	},
-	close: {
-		backgroundColor: '#333',
+		marginTop: -10,
 		borderRadius: 20,
-		marginBottom: 20,
-		alignSelf: 'flex-end',
-		shadowColor: '#ccc',
-		shadowOffset: {width: 0, height: 4},
-		shadowOpacity: 0.1,
-		shadowRadius: 10,
-		elevation: 10,
-		position: 'absolute',
-		right: 10,
-		top: 10,
 	},
 	sectionTitle: {
 		fontSize: 16,

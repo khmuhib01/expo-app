@@ -14,7 +14,7 @@ export default function TabLayout() {
 				headerStyle: {backgroundColor: headerColor},
 				headerTitleStyle: {fontSize: headerTextSize, color: headerTextColor},
 				headerTintColor: headerButtonColor,
-				headerRight: () => <HeaderMenu iconColor={headerButtonColor} />,
+				// headerRight: () => <HeaderMenu iconColor={headerButtonColor} />,
 				tabBarStyle: {backgroundColor: headerColor},
 				tabBarActiveTintColor: headerButtonColor,
 				tabBarInactiveTintColor: '#fff',
